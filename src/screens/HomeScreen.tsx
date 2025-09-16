@@ -1,82 +1,55 @@
 // src/screens/HomeScreen.tsx
+import SubscriptionCard from "@/components/SubscriptionCard";
+import type { RootStackParamList } from "@/navigation/RootNavigator";
+import { mockSubscriptions } from "@/types/subscription";
+import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import * as React from "react";
-import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 
-export default function HomeScreen() {
-  const [count, setCount] = React.useState(0);
+type Props = NativeStackScreenProps<RootStackParamList, "Home">;
 
+export default function HomeScreen({ navigation }: Props) {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Subscription Tracker</Text>
-      <Text style={styles.subtitle}>
-        If you can see this, navigation + your custom screen are working ✅
-      </Text>
+      <Text style={styles.title}>My Subscriptions</Text>
 
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Subscriptions this month</Text>
-        <Text style={styles.cardValue}>{count}</Text>
-        <Pressable
-          onPress={() => setCount((c) => c + 1)}
-          style={({ pressed }) => [styles.button, pressed && { opacity: 0.8 }]}
-        >
-          <Text style={styles.buttonText}>Fake Add +1</Text>
-        </Pressable>
-      </View>
+      <FlatList
+        data={mockSubscriptions}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <Pressable
+            onPress={() => navigation.navigate("Details", { id: item.id })}
+          >
+            <SubscriptionCard item={item} />
+          </Pressable>
+        )}
+        contentContainerStyle={{ paddingBottom: 20 }}
+      />
 
       <Pressable
-        onPress={() => Alert.alert("Looks good!", "Everything is wired up.")}
-        style={({ pressed }) => [
-          styles.secondaryButton,
-          pressed && { opacity: 0.8 },
-        ]}
+        style={styles.addButton}
+        onPress={() => navigation.navigate("AddSubscription")}
       >
-        <Text style={styles.secondaryText}>Run check</Text>
+        <Text style={styles.addText}>+ Add Subscription</Text>
       </Pressable>
-
-      <Text style={styles.footer}>
-        Next: create Add / Details screens and wire real data.
-      </Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    paddingTop: 32,
-    gap: 16,
-    backgroundColor: "#0B132B",
+  container: { flex: 1, padding: 20, backgroundColor: "#0B132B" },
+  title: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    marginBottom: 16,
   },
-  title: { fontSize: 24, fontWeight: "700", color: "#FFFFFF" },
-  subtitle: { fontSize: 14, color: "#B8C1EC" },
-  card: {
-    backgroundColor: "#1C2541",
-    borderRadius: 16,
-    padding: 20,
-    shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 3,
-    gap: 10,
-  },
-  cardTitle: { color: "#B8C1EC", fontSize: 14 },
-  cardValue: { color: "#FFFFFF", fontSize: 48, fontWeight: "800" },
-  button: {
-    marginTop: 8,
+  addButton: {
     backgroundColor: "#5BC0BE",
-    paddingVertical: 12,
+    padding: 14,
     borderRadius: 12,
     alignItems: "center",
+    marginTop: 12,
   },
-  buttonText: { color: "#0B132B", fontWeight: "700" },
-  secondaryButton: {
-    marginTop: 4,
-    backgroundColor: "#3A506B",
-    paddingVertical: 12,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  secondaryText: { color: "#E0FBFC", fontWeight: "600" },
-  footer: { color: "#93A3BC", marginTop: 8, fontSize: 12 },
+  addText: { color: "#0B132B", fontWeight: "700", fontSize: 16 },
 });
