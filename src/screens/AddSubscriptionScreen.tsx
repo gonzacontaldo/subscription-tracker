@@ -1,38 +1,63 @@
-// src/screens/AddSubscriptionScreen.tsx
-import type { RootStackParamList } from "@/navigation/RootNavigator";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { Picker } from "@react-native-picker/picker";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import * as React from "react";
 import {
   Alert,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from "react-native";
+import { categories } from "../constants/categories";
+import { getIconKeyForName } from "../constants/icons";
+import { addSubscription } from "../db/repositories/subscriptions.repo";
+import type { RootStackParamList } from "../navigation/RootNavigator";
+import { colors } from "../theme/colors";
 
 type Props = NativeStackScreenProps<RootStackParamList, "AddSubscription">;
 
 export default function AddSubscriptionScreen({ navigation }: Props) {
   const [name, setName] = React.useState("");
   const [price, setPrice] = React.useState("");
-  const [category, setCategory] = React.useState("");
+  const [category, setCategory] = React.useState("Other");
+  const [billingCycle, setBillingCycle] = React.useState("monthly");
+  const [startDate, setStartDate] = React.useState<string | null>(null);
+  const [showDatePicker, setShowDatePicker] = React.useState(false);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!name || !price) {
       Alert.alert("Validation", "Please enter name and price");
       return;
     }
 
-    Alert.alert(
-      "Saved!",
-      `Name: ${name}\nPrice: $${price}\nCategory: ${category || "N/A"}`
-    );
-    navigation.goBack();
+    try {
+      await addSubscription({
+        name,
+        iconKey: getIconKeyForName(name),
+        price: parseFloat(price),
+        currency: "USD",
+        category,
+        billingCycle: billingCycle as any,
+        startDate: startDate || new Date().toISOString(),
+        nextPaymentDate: new Date().toISOString(),
+        notes: "",
+      });
+
+      navigation.goBack();
+    } catch (err) {
+      console.error("Failed to add subscription:", err);
+      Alert.alert("Error", "Could not save subscription");
+    }
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={{ paddingBottom: 40 }}
+    >
       <Text style={styles.title}>Add New Subscription</Text>
 
       <TextInput
@@ -52,37 +77,96 @@ export default function AddSubscriptionScreen({ navigation }: Props) {
         onChangeText={setPrice}
       />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Category (e.g. Streaming)"
-        placeholderTextColor="#aaa"
-        value={category}
-        onChangeText={setCategory}
-      />
+      <Text style={styles.label}>Category</Text>
+      <View style={styles.pickerWrapper}>
+        <Picker
+          selectedValue={category}
+          onValueChange={(value) => setCategory(value)}
+          style={styles.picker}
+        >
+          {categories.map((cat) => (
+            <Picker.Item key={cat} label={cat} value={cat} />
+          ))}
+        </Picker>
+      </View>
+
+      <Text style={styles.label}>Billing Cycle</Text>
+      <View style={styles.pickerWrapper}>
+        <Picker
+          selectedValue={billingCycle}
+          onValueChange={(value) => setBillingCycle(value)}
+          style={styles.picker}
+        >
+          <Picker.Item label="Monthly" value="monthly" />
+          <Picker.Item label="Yearly" value="yearly" />
+          <Picker.Item label="Weekly" value="weekly" />
+          <Picker.Item label="Custom" value="custom" />
+        </Picker>
+      </View>
+
+      <Text style={styles.label}>Start Date</Text>
+      <Pressable onPress={() => setShowDatePicker(true)} style={styles.input}>
+        <Text style={{ color: "#FFF" }}>
+          {startDate ? new Date(startDate).toDateString() : "Pick a date"}
+        </Text>
+      </Pressable>
+
+      {showDatePicker && (
+        <DateTimePicker
+          value={startDate ? new Date(startDate) : new Date()}
+          mode="date"
+          display="default"
+          onChange={(event, selectedDate) => {
+            setShowDatePicker(false);
+            if (selectedDate) setStartDate(selectedDate.toISOString());
+          }}
+        />
+      )}
 
       <Pressable style={styles.saveButton} onPress={handleSave}>
         <Text style={styles.saveText}>Save</Text>
       </Pressable>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#0B132B", padding: 20 },
-  title: { fontSize: 22, fontWeight: "700", color: "#FFF", marginBottom: 20 },
+  container: { flex: 1, backgroundColor: colors.background, padding: 20 },
+  title: {
+    fontSize: 22,
+    fontFamily: "PoppinsBold",
+    color: colors.text,
+    marginBottom: 20,
+  },
   input: {
-    backgroundColor: "#1C2541",
-    color: "#FFF",
+    backgroundColor: colors.card,
+    color: colors.text,
     padding: 12,
     borderRadius: 8,
     marginBottom: 12,
+    fontFamily: "PoppinsRegular",
   },
+  label: {
+    fontFamily: "PoppinsBold",
+    color: colors.textSecondary,
+    marginBottom: 4,
+  },
+  pickerWrapper: {
+    backgroundColor: colors.card,
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  picker: { color: colors.text },
   saveButton: {
-    backgroundColor: "#5BC0BE",
+    backgroundColor: colors.accent,
     padding: 14,
     borderRadius: 12,
     alignItems: "center",
     marginTop: 8,
   },
-  saveText: { color: "#0B132B", fontWeight: "700", fontSize: 16 },
+  saveText: {
+    color: colors.background,
+    fontFamily: "PoppinsBold",
+    fontSize: 16,
+  },
 });

@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Subscription Tracker",
-    "slug": "subscription-tracker",
+    "name": "my-app",
+    "slug": "my-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -9,23 +9,16 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
-    "updates": {
-      "fallbackToCacheTimeout": 0
-    },
-    "assetBundlePatterns": ["**/*"],
-    "ios": {
-      "supportsTablet": true
+      "backgroundColor": "#0B132B"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#0B132B"
       }
     },
-    "web": {
-      "favicon": "./assets/favicon.png"
+    "ios": {
+      "supportsTablet": true
     }
   }
 }

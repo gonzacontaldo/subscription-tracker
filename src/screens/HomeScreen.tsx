@@ -1,55 +1,96 @@
-// src/screens/HomeScreen.tsx
-import SubscriptionCard from "@/components/SubscriptionCard";
-import type { RootStackParamList } from "@/navigation/RootNavigator";
-import { mockSubscriptions } from "@/types/subscription";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import * as React from "react";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  FlatList,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import SubscriptionCard from "../components/SubscriptionCard";
+import { getAllSubscriptions } from "../db/repositories/subscriptions.repo";
+import type { RootStackParamList } from "../navigation/RootNavigator";
+import { colors } from "../theme/colors";
+import { Subscription } from "../types/subscription";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Home">;
 
 export default function HomeScreen({ navigation }: Props) {
+  const [subs, setSubs] = React.useState<Subscription[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  const loadData = async () => {
+    try {
+      const data = await getAllSubscriptions();
+      setSubs(data);
+    } catch (err) {
+      console.error("Failed to load subscriptions:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    const unsubscribe = navigation.addListener("focus", loadData);
+    return unsubscribe;
+  }, [navigation]);
+
+  if (loading) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>My Subscriptions</Text>
-
       <FlatList
-        data={mockSubscriptions}
-        keyExtractor={(item) => item.id}
+        data={subs}
+        keyExtractor={(item) => String(item.id)}
         renderItem={({ item }) => (
           <Pressable
-            onPress={() => navigation.navigate("Details", { id: item.id })}
+            onPress={() =>
+              navigation.navigate("Details", { id: String(item.id) })
+            }
           >
             <SubscriptionCard item={item} />
           </Pressable>
         )}
-        contentContainerStyle={{ paddingBottom: 20 }}
+        ListEmptyComponent={
+          <Text style={styles.empty}>No subscriptions yet.</Text>
+        }
       />
-
       <Pressable
         style={styles.addButton}
         onPress={() => navigation.navigate("AddSubscription")}
       >
-        <Text style={styles.addText}>+ Add Subscription</Text>
+        <Text style={styles.addText}>＋</Text>
       </Pressable>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: "#0B132B" },
-  title: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#FFFFFF",
-    marginBottom: 16,
-  },
+  container: { flex: 1, backgroundColor: colors.background, padding: 20 },
+  center: { flex: 1, justifyContent: "center", alignItems: "center" },
+  empty: { color: colors.textSecondary, textAlign: "center", marginTop: 20 },
   addButton: {
-    backgroundColor: "#5BC0BE",
-    padding: 14,
-    borderRadius: 12,
+    position: "absolute",
+    bottom: 30,
+    right: 30,
+    backgroundColor: colors.accent,
+    borderRadius: 30,
+    width: 60,
+    height: 60,
     alignItems: "center",
-    marginTop: 12,
+    justifyContent: "center",
+    elevation: 4,
   },
-  addText: { color: "#0B132B", fontWeight: "700", fontSize: 16 },
+  addText: {
+    color: colors.background,
+    fontSize: 30,
+    fontFamily: "PoppinsBold",
+  },
 });
