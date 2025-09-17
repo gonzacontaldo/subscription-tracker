@@ -1,4 +1,3 @@
-import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import * as React from "react";
@@ -11,6 +10,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { categories } from "../constants/categories";
 import { getIconKeyForName } from "../constants/icons";
 import { addSubscription } from "../db/repositories/subscriptions.repo";
@@ -51,6 +51,11 @@ export default function AddSubscriptionScreen({ navigation }: Props) {
       console.error("Failed to add subscription:", err);
       Alert.alert("Error", "Could not save subscription");
     }
+  };
+
+  const handleDateConfirm = (date: Date) => {
+    setStartDate(date.toISOString());
+    setShowDatePicker(false);
   };
 
   return (
@@ -106,22 +111,18 @@ export default function AddSubscriptionScreen({ navigation }: Props) {
 
       <Text style={styles.label}>Start Date</Text>
       <Pressable onPress={() => setShowDatePicker(true)} style={styles.input}>
-        <Text style={{ color: "#FFF" }}>
+        <Text style={{ color: colors.text }}>
           {startDate ? new Date(startDate).toDateString() : "Pick a date"}
         </Text>
       </Pressable>
 
-      {showDatePicker && (
-        <DateTimePicker
-          value={startDate ? new Date(startDate) : new Date()}
-          mode="date"
-          display="default"
-          onChange={(event, selectedDate) => {
-            setShowDatePicker(false);
-            if (selectedDate) setStartDate(selectedDate.toISOString());
-          }}
-        />
-      )}
+      <DateTimePickerModal
+        isVisible={showDatePicker}
+        mode="date"
+        date={startDate ? new Date(startDate) : new Date()}
+        onConfirm={handleDateConfirm}
+        onCancel={() => setShowDatePicker(false)}
+      />
 
       <Pressable style={styles.saveButton} onPress={handleSave}>
         <Text style={styles.saveText}>Save</Text>

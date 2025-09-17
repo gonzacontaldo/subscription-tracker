@@ -1,4 +1,3 @@
-import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import * as React from "react";
@@ -11,6 +10,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { categories } from "../constants/categories";
 import { getIconKeyForName } from "../constants/icons";
 import {
@@ -49,7 +49,7 @@ export default function DetailsScreen({ route, navigation }: Props) {
     try {
       await updateSubscription({
         ...sub,
-        iconKey: getIconKeyForName(sub.name), // auto-update icon if name changes
+        iconKey: getIconKeyForName(sub.name),
       });
       setEditing(false);
       Alert.alert("Success", "Subscription updated");
@@ -68,6 +68,13 @@ export default function DetailsScreen({ route, navigation }: Props) {
       console.error("Delete failed:", err);
       Alert.alert("Error", "Could not delete subscription");
     }
+  };
+
+  const handleDateConfirm = (date: Date) => {
+    if (sub) {
+      setSub({ ...sub, startDate: date.toISOString() });
+    }
+    setShowDatePicker(false);
   };
 
   if (loading) {
@@ -145,18 +152,14 @@ export default function DetailsScreen({ route, navigation }: Props) {
                 : "Pick a date"}
             </Text>
           </Pressable>
-          {showDatePicker && (
-            <DateTimePicker
-              value={sub.startDate ? new Date(sub.startDate) : new Date()}
-              mode="date"
-              display="default"
-              onChange={(event, selectedDate) => {
-                setShowDatePicker(false);
-                if (selectedDate)
-                  setSub({ ...sub, startDate: selectedDate.toISOString() });
-              }}
-            />
-          )}
+
+          <DateTimePickerModal
+            isVisible={showDatePicker}
+            mode="date"
+            date={sub.startDate ? new Date(sub.startDate) : new Date()}
+            onConfirm={handleDateConfirm}
+            onCancel={() => setShowDatePicker(false)}
+          />
 
           <Pressable style={styles.saveButton} onPress={handleUpdate}>
             <Text style={styles.saveText}>💾 Save</Text>
