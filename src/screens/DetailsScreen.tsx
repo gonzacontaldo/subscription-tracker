@@ -21,6 +21,7 @@ import {
 import type { RootStackParamList } from "../navigation/RootNavigator";
 import { colors } from "../theme/colors";
 import type { Subscription } from "../types/subscription";
+import { calculateNextPayment, daysUntil } from "../utils/dataHelpers";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Details">;
 
@@ -50,6 +51,7 @@ export default function DetailsScreen({ route, navigation }: Props) {
       await updateSubscription({
         ...sub,
         iconKey: getIconKeyForName(sub.name),
+        nextPaymentDate: calculateNextPayment(sub.startDate, sub.billingCycle),
       });
       setEditing(false);
       Alert.alert("Success", "Subscription updated");
@@ -178,6 +180,9 @@ export default function DetailsScreen({ route, navigation }: Props) {
           </Text>
           <Text style={styles.detail}>
             Next Payment: {new Date(sub.nextPaymentDate).toDateString()}
+          </Text>
+          <Text style={styles.detail}>
+            Next Payment in {daysUntil(sub.nextPaymentDate)} days
           </Text>
         </>
       )}

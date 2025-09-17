@@ -16,6 +16,7 @@ import { getIconKeyForName } from "../constants/icons";
 import { addSubscription } from "../db/repositories/subscriptions.repo";
 import type { RootStackParamList } from "../navigation/RootNavigator";
 import { colors } from "../theme/colors";
+import { calculateNextPayment } from "../utils/dataHelpers";
 
 type Props = NativeStackScreenProps<RootStackParamList, "AddSubscription">;
 
@@ -42,7 +43,10 @@ export default function AddSubscriptionScreen({ navigation }: Props) {
         category,
         billingCycle: billingCycle as any,
         startDate: startDate || new Date().toISOString(),
-        nextPaymentDate: new Date().toISOString(),
+        nextPaymentDate: calculateNextPayment(
+          startDate || new Date().toISOString(),
+          billingCycle
+        ),
         notes: "",
       });
 

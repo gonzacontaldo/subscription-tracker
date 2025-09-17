@@ -5,6 +5,6 @@ export const colors = {
   accentSecondary: "#4ECDC4", // aqua teal
   text: "#1A1A1A",         // almost black
   textSecondary: "#5C5C5C",// dark gray
-  muted: "#F5D0A9",        // soft beige
+  muted: "#B0A99F",        // soft beige
   danger: "#D62828",       // stronger red for deletes
 };
