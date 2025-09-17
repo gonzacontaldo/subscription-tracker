@@ -3,7 +3,7 @@ import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { subscriptionIcons } from "../constants/icons";
 import { colors } from "../theme/colors";
 import { Subscription } from "../types/subscription";
-import { daysUntil } from "../utils/dataHelpers";
+import { daysUntil } from "../utils/dateHelpers";
 
 type Props = {
   subscription: Subscription;

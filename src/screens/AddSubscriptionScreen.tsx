@@ -16,7 +16,7 @@ import { getIconKeyForName } from "../constants/icons";
 import { addSubscription } from "../db/repositories/subscriptions.repo";
 import type { RootStackParamList } from "../navigation/RootNavigator";
 import { colors } from "../theme/colors";
-import { calculateNextPayment } from "../utils/dataHelpers";
+import { calculateNextPayment } from "../utils/dateHelpers";
 
 type Props = NativeStackScreenProps<RootStackParamList, "AddSubscription">;
 

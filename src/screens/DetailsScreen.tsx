@@ -21,7 +21,7 @@ import {
 import type { RootStackParamList } from "../navigation/RootNavigator";
 import { colors } from "../theme/colors";
 import type { Subscription } from "../types/subscription";
-import { calculateNextPayment, daysUntil } from "../utils/dataHelpers";
+import { calculateNextPayment, daysUntil } from "../utils/dateHelpers";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Details">;
 
