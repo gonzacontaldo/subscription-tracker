@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: "row", justifyContent: "space-between", marginTop: 20 },
   button: {
     flex: 1,
-    backgroundColor: colors.accentDark,
+    backgroundColor: colors.accent,
     padding: 14,
     borderRadius: 12,
     alignItems: "center",

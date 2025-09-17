@@ -1,10 +1,10 @@
 export const colors = {
-  background: "#0B132B",
-  card: "#1C2541",
-  accent: "#5BC0BE",
-  accentDark: "#3A506B",
-  text: "#FFFFFF",
-  textSecondary: "#B8C1EC",
-  muted: "#E0FBFC",
-  danger: "#e63946",
+  background: "#FFF8F0",   // cream
+  card: "#FFE4C7",         // peach beige
+  accent: "#FF6B6B",       // warm red
+  accentSecondary: "#4ECDC4", // aqua teal
+  text: "#1A1A1A",         // almost black
+  textSecondary: "#5C5C5C",// dark gray
+  muted: "#F5D0A9",        // soft beige
+  danger: "#D62828",       // stronger red for deletes
 };
