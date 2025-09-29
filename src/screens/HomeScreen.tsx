@@ -17,7 +17,7 @@ export default function HomeScreen({ navigation }: any) {
   >("Next Payment");
   const isFocused = useIsFocused();
 
-  const loadData = async () => {
+  const loadData = React.useCallback(async () => {
     try {
       const subs = await getAllSubscriptions();
 
@@ -51,11 +51,11 @@ export default function HomeScreen({ navigation }: any) {
     } catch (err) {
       console.error("Failed to load subscriptions:", err);
     }
-  };
+  }, [sortBy]);
 
   React.useEffect(() => {
     if (isFocused) loadData();
-  }, [isFocused, sortBy]);
+  }, [isFocused, loadData]);
 
   // Group by category
   const grouped = subscriptions.reduce((acc: any, sub) => {
