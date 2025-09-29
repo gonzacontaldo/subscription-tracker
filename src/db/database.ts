@@ -1,10 +1,10 @@
 // src/db/database.ts
-import * as SQLite from "expo-sqlite";
+import * as SQLite from 'expo-sqlite';
 
 let db: SQLite.SQLiteDatabase;
 
 export async function initDatabase() {
-  db = await SQLite.openDatabaseAsync("subscriptions.v2.db");
+  db = await SQLite.openDatabaseAsync('subscriptions.v2.db');
 
   // Create table with new columns if not exists
   await db.execAsync(`
@@ -29,22 +29,22 @@ export async function initDatabase() {
 
 export async function execute(
   sql: string,
-  params: any[] = []
+  params: SQLite.SQLiteBindParams = [],
 ): Promise<SQLite.SQLiteRunResult> {
   return db.runAsync(sql, params);
 }
 
-export async function queryAll<T = any>(
+export async function queryAll<T = Record<string, unknown>>(
   sql: string,
-  params: any[] = []
+  params: SQLite.SQLiteBindParams = [],
 ): Promise<T[]> {
   const result = await db.getAllAsync<T>(sql, params);
   return result;
 }
 
-export async function queryOne<T = any>(
+export async function queryOne<T = Record<string, unknown>>(
   sql: string,
-  params: any[] = []
+  params: SQLite.SQLiteBindParams = [],
 ): Promise<T | null> {
   const result = await db.getFirstAsync<T>(sql, params);
   return result ?? null;

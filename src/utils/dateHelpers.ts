@@ -1,17 +1,14 @@
-export function calculateNextPayment(
-  startDate: string,
-  billingCycle: string
-): string {
+export function calculateNextPayment(startDate: string, billingCycle: string): string {
   const date = new Date(startDate);
 
   switch (billingCycle) {
-    case "weekly":
+    case 'weekly':
       date.setDate(date.getDate() + 7);
       break;
-    case "monthly":
+    case 'monthly':
       date.setMonth(date.getMonth() + 1);
       break;
-    case "yearly":
+    case 'yearly':
       date.setFullYear(date.getFullYear() + 1);
       break;
     default:
@@ -26,20 +23,20 @@ export function calculateNextPayment(
 export function rollForwardNextPayment(
   startDate: string,
   billingCycle: string,
-  currentNextPayment: string
+  currentNextPayment: string,
 ): string {
-  let next = new Date(currentNextPayment);
+  const next = new Date(currentNextPayment);
   const now = new Date();
 
   while (next < now) {
     switch (billingCycle) {
-      case "weekly":
+      case 'weekly':
         next.setDate(next.getDate() + 7);
         break;
-      case "monthly":
+      case 'monthly':
         next.setMonth(next.getMonth() + 1);
         break;
-      case "yearly":
+      case 'yearly':
         next.setFullYear(next.getFullYear() + 1);
         break;
       default:

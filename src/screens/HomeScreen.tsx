@@ -1,73 +1,117 @@
-import { DrawerActions, useIsFocused } from "@react-navigation/native";
-import * as React from "react";
-import { Pressable, SectionList, StyleSheet, Text, View } from "react-native";
-import SubscriptionCard from "../components/SubscriptionCard";
+import { DrawerActions, useIsFocused } from '@react-navigation/native';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import * as React from 'react';
+import { Pressable, SectionList, StyleSheet, Text, View } from 'react-native';
+
+import SubscriptionCard from '../components/SubscriptionCard';
 import {
   getAllSubscriptions,
   updateSubscription,
-} from "../db/repositories/subscriptions.repo";
-import { colors } from "../theme/colors";
-import { Subscription } from "../types/subscription";
-import { rollForwardNextPayment } from "../utils/dateHelpers";
+} from '../db/repositories/subscriptions.repo';
+import type { RootStackParamList } from '../navigation/RootNavigator';
+import { colors } from '../theme/colors';
+import type { Subscription } from '../types/subscription';
+import { rollForwardNextPayment } from '../utils/dateHelpers';
+import { cancelReminder, scheduleReminder } from '../utils/notifications';
 
-export default function HomeScreen({ navigation }: any) {
+type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
+type SortOption = 'Price' | 'Next Payment' | 'Start Date';
+
+const SORT_OPTIONS: ReadonlyArray<SortOption> = ['Price', 'Next Payment', 'Start Date'];
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+export default function HomeScreen({ navigation }: Props) {
   const [subscriptions, setSubscriptions] = React.useState<Subscription[]>([]);
-  const [sortBy, setSortBy] = React.useState<
-    "Price" | "Next Payment" | "Start Date"
-  >("Next Payment");
+  const [sortBy, setSortBy] = React.useState<SortOption>('Next Payment');
   const isFocused = useIsFocused();
 
-  const loadData = async () => {
+  const loadData = React.useCallback(async () => {
     try {
       const subs = await getAllSubscriptions();
 
       // Auto-roll forward next payment dates if they are in the past
-      for (let sub of subs) {
+      for (const sub of subs) {
         const rolled = rollForwardNextPayment(
           sub.startDate,
           sub.billingCycle,
-          sub.nextPaymentDate
+          sub.nextPaymentDate,
         );
+
         if (rolled !== sub.nextPaymentDate) {
-          await updateSubscription({ ...sub, nextPaymentDate: rolled });
-          sub.nextPaymentDate = rolled; // update local state copy too
+          let newNotificationId: string | null = null;
+
+          try {
+            if (sub.notificationId) {
+              await cancelReminder(sub.notificationId);
+            }
+
+            const reminderDays = sub.reminderDaysBefore ?? 1;
+            const triggerDate = new Date(
+              new Date(rolled).getTime() - reminderDays * DAY_MS,
+            );
+
+            newNotificationId =
+              (await scheduleReminder(
+                `sub-${sub.id}-${Date.now()}`,
+                `${sub.name} renewal soon`,
+                `Your ${sub.name} subscription will renew at $${sub.price.toFixed(2)}`,
+                triggerDate,
+              )) ?? null;
+
+            const updatedSub: Subscription = {
+              ...sub,
+              nextPaymentDate: rolled,
+              notificationId: newNotificationId,
+            };
+
+            await updateSubscription(updatedSub);
+
+            sub.nextPaymentDate = updatedSub.nextPaymentDate;
+            sub.notificationId = updatedSub.notificationId;
+          } catch (innerErr) {
+            if (newNotificationId) {
+              await cancelReminder(newNotificationId);
+            }
+            throw innerErr;
+          }
         }
       }
 
       // Apply sorting
       const sorted = [...subs].sort((a, b) => {
-        if (sortBy === "Price") return b.price - a.price;
-        if (sortBy === "Start Date")
-          return (
-            new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
-          );
+        if (sortBy === 'Price') return b.price - a.price;
+        if (sortBy === 'Start Date')
+          return new Date(a.startDate).getTime() - new Date(b.startDate).getTime();
         return (
-          new Date(a.nextPaymentDate).getTime() -
-          new Date(b.nextPaymentDate).getTime()
+          new Date(a.nextPaymentDate).getTime() - new Date(b.nextPaymentDate).getTime()
         );
       });
 
       setSubscriptions(sorted);
     } catch (err) {
-      console.error("Failed to load subscriptions:", err);
+      console.error('Failed to load subscriptions:', err);
     }
-  };
+  }, [sortBy]);
 
   React.useEffect(() => {
-    if (isFocused) loadData();
-  }, [isFocused, sortBy]);
+    if (isFocused) {
+      void loadData();
+    }
+  }, [isFocused, loadData]);
 
   // Group by category
-  const grouped = subscriptions.reduce((acc: any, sub) => {
-    const cat = sub.category || "Other";
-    if (!acc[cat]) acc[cat] = [];
-    acc[cat].push(sub);
+  const grouped = subscriptions.reduce<Record<string, Subscription[]>>((acc, sub) => {
+    const cat = sub.category || 'Other';
+    if (!acc[cat]) {
+      acc[cat] = [];
+    }
+    acc[cat]!.push(sub);
     return acc;
   }, {});
 
-  const sections = Object.keys(grouped).map((cat) => ({
-    title: cat,
-    data: grouped[cat],
+  const sections = Object.entries(grouped).map(([title, data]) => ({
+    title,
+    data,
   }));
 
   return (
@@ -76,9 +120,7 @@ export default function HomeScreen({ navigation }: any) {
       <View style={styles.header}>
         <Pressable
           style={styles.menuButton}
-          onPress={() =>
-            navigation.getParent()?.dispatch(DrawerActions.openDrawer())
-          }
+          onPress={() => navigation.getParent()?.dispatch(DrawerActions.openDrawer())}
         >
           <Text style={styles.menuIcon}>☰</Text>
         </Pressable>
@@ -89,19 +131,16 @@ export default function HomeScreen({ navigation }: any) {
       <View style={styles.sortWrapper}>
         <Text style={styles.sortLabel}>Sort by:</Text>
         <View style={styles.sortButtons}>
-          {["Price", "Next Payment", "Start Date"].map((opt) => (
+          {SORT_OPTIONS.map((opt) => (
             <Pressable
               key={opt}
-              style={[
-                styles.sortButton,
-                sortBy === (opt as any) && styles.sortButtonActive,
-              ]}
-              onPress={() => setSortBy(opt as any)}
+              style={[styles.sortButton, sortBy === opt && styles.sortButtonActive]}
+              onPress={() => setSortBy(opt)}
             >
               <Text
                 style={[
                   styles.sortButtonText,
-                  sortBy === (opt as any) && styles.sortButtonTextActive,
+                  sortBy === opt && styles.sortButtonTextActive,
                 ]}
               >
                 {opt}
@@ -117,7 +156,7 @@ export default function HomeScreen({ navigation }: any) {
         renderItem={({ item }) => (
           <SubscriptionCard
             subscription={item}
-            onPress={() => navigation.navigate("Details", { id: item.id })}
+            onPress={() => navigation.navigate('Details', { id: item.id })}
           />
         )}
         renderSectionHeader={({ section: { title } }) => (
@@ -131,7 +170,7 @@ export default function HomeScreen({ navigation }: any) {
 
       <Pressable
         style={styles.fab}
-        onPress={() => navigation.navigate("AddSubscription")}
+        onPress={() => navigation.navigate('AddSubscription')}
       >
         <Text style={styles.fabText}>＋</Text>
       </Pressable>
@@ -144,8 +183,8 @@ const styles = StyleSheet.create({
 
   // Header
   header: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 8,
@@ -155,10 +194,10 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     backgroundColor: colors.accent,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
     marginRight: 12,
-    shadowColor: "#000",
+    shadowColor: '#000',
     shadowOpacity: 0.2,
     shadowRadius: 3,
     elevation: 2,
@@ -166,11 +205,11 @@ const styles = StyleSheet.create({
   menuIcon: {
     fontSize: 18,
     color: colors.card,
-    fontFamily: "PoppinsBold",
+    fontFamily: 'PoppinsBold',
   },
   headerTitle: {
     fontSize: 20,
-    fontFamily: "PoppinsBold",
+    fontFamily: 'PoppinsBold',
     color: colors.text,
   },
 
@@ -183,12 +222,12 @@ const styles = StyleSheet.create({
   sortLabel: {
     fontSize: 14,
     color: colors.textSecondary,
-    fontFamily: "PoppinsRegular",
+    fontFamily: 'PoppinsRegular',
     marginBottom: 6,
   },
   sortButtons: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     backgroundColor: colors.card,
     borderRadius: 12,
     padding: 4,
@@ -198,25 +237,25 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     marginHorizontal: 4,
     borderRadius: 8,
-    alignItems: "center",
+    alignItems: 'center',
   },
   sortButtonActive: {
     backgroundColor: colors.accent,
   },
   sortButtonText: {
-    fontFamily: "PoppinsRegular",
+    fontFamily: 'PoppinsRegular',
     fontSize: 14,
     color: colors.text,
   },
   sortButtonTextActive: {
-    fontFamily: "PoppinsBold",
+    fontFamily: 'PoppinsBold',
     color: colors.card,
   },
 
   // Sections
   sectionHeader: {
     fontSize: 18,
-    fontFamily: "PoppinsBold",
+    fontFamily: 'PoppinsBold',
     backgroundColor: colors.background,
     color: colors.accent,
     paddingHorizontal: 16,
@@ -224,27 +263,27 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   empty: {
-    textAlign: "center",
+    textAlign: 'center',
     marginTop: 40,
     color: colors.textSecondary,
-    fontFamily: "PoppinsRegular",
+    fontFamily: 'PoppinsRegular',
   },
 
   // FAB
   fab: {
-    position: "absolute",
+    position: 'absolute',
     bottom: 20,
     right: 20,
     backgroundColor: colors.accent,
     width: 56,
     height: 56,
     borderRadius: 28,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 3,
   },
-  fabText: { fontSize: 28, color: colors.card, fontWeight: "bold" },
+  fabText: { fontSize: 28, color: colors.card, fontWeight: 'bold' },
 });

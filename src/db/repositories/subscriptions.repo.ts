@@ -1,19 +1,12 @@
-import { Subscription } from "../../types/subscription";
-import { execute, queryAll, queryOne } from "../database";
+import type { Subscription } from '../../types/subscription';
+import { execute, queryAll, queryOne } from '../database';
 
 export async function getAllSubscriptions(): Promise<Subscription[]> {
-  return await queryAll<Subscription>(
-    "SELECT * FROM subscriptions ORDER BY id DESC"
-  );
+  return await queryAll<Subscription>('SELECT * FROM subscriptions ORDER BY id DESC');
 }
 
-export async function getSubscriptionById(
-  id: number
-): Promise<Subscription | null> {
-  return await queryOne<Subscription>(
-    "SELECT * FROM subscriptions WHERE id = ?",
-    [id]
-  );
+export async function getSubscriptionById(id: number): Promise<Subscription | null> {
+  return await queryOne<Subscription>('SELECT * FROM subscriptions WHERE id = ?', [id]);
 }
 
 export async function addSubscription(sub: Subscription) {
@@ -24,14 +17,14 @@ export async function addSubscription(sub: Subscription) {
   `;
   const params = [
     sub.name,
-    sub.iconKey || "default",
+    sub.iconKey || 'default',
     sub.category,
     sub.price,
     sub.currency,
     sub.billingCycle,
     sub.startDate,
     sub.nextPaymentDate,
-    sub.notes || "",
+    sub.notes || '',
     sub.reminderDaysBefore ?? 1,
     sub.notificationId || null,
   ];
@@ -39,7 +32,7 @@ export async function addSubscription(sub: Subscription) {
 }
 
 export async function updateSubscription(sub: Subscription) {
-  if (!sub.id) throw new Error("Subscription id required for update");
+  if (!sub.id) throw new Error('Subscription id required for update');
 
   const query = `
     UPDATE subscriptions
@@ -49,14 +42,14 @@ export async function updateSubscription(sub: Subscription) {
   `;
   const params = [
     sub.name,
-    sub.iconKey || "default",
+    sub.iconKey || 'default',
     sub.category,
     sub.price,
     sub.currency,
     sub.billingCycle,
     sub.startDate,
     sub.nextPaymentDate,
-    sub.notes || "",
+    sub.notes || '',
     sub.reminderDaysBefore ?? 1,
     sub.notificationId || null,
     sub.id,
@@ -65,5 +58,5 @@ export async function updateSubscription(sub: Subscription) {
 }
 
 export async function deleteSubscription(id: number) {
-  await execute("DELETE FROM subscriptions WHERE id = ?", [id]);
+  await execute('DELETE FROM subscriptions WHERE id = ?', [id]);
 }

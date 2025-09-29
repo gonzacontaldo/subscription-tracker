@@ -1,10 +1,11 @@
-import { createDrawerNavigator } from "@react-navigation/drawer";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import * as React from "react";
-import AddSubscriptionScreen from "../screens/AddSubscriptionScreen";
-import DetailsScreen from "../screens/DetailsScreen";
-import HomeScreen from "../screens/HomeScreen";
-import { colors } from "../theme/colors";
+import { createDrawerNavigator } from '@react-navigation/drawer';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import * as React from 'react';
+
+import AddSubscriptionScreen from '../screens/AddSubscriptionScreen';
+import DetailsScreen from '../screens/DetailsScreen';
+import HomeScreen from '../screens/HomeScreen';
+import { colors } from '../theme/colors';
 
 export type RootStackParamList = {
   Home: undefined;
@@ -37,7 +38,7 @@ export default function RootNavigator() {
         drawerActiveTintColor: colors.accent,
         drawerInactiveTintColor: colors.textSecondary,
         drawerLabelStyle: {
-          fontFamily: "PoppinsRegular",
+          fontFamily: 'PoppinsRegular',
           fontSize: 15,
         },
       }}
@@ -45,7 +46,7 @@ export default function RootNavigator() {
       <Drawer.Screen
         name="Main"
         component={MainStack}
-        options={{ drawerLabel: "Home" }}
+        options={{ drawerLabel: 'Home' }}
       />
       {/* Later add: <Drawer.Screen name="Filters" component={FiltersScreen} /> */}
     </Drawer.Navigator>

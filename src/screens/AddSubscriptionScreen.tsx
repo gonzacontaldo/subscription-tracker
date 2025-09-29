@@ -1,6 +1,6 @@
-import { Picker } from "@react-native-picker/picker";
-import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import * as React from "react";
+import { Picker } from '@react-native-picker/picker';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import * as React from 'react';
 import {
   Alert,
   Pressable,
@@ -9,69 +9,83 @@ import {
   Text,
   TextInput,
   View,
-} from "react-native";
-import DateTimePickerModal from "react-native-modal-datetime-picker";
+} from 'react-native';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
 
-import { categories } from "../constants/categories";
-import { getIconKeyForName } from "../constants/icons";
-import { addSubscription } from "../db/repositories/subscriptions.repo";
-import type { RootStackParamList } from "../navigation/RootNavigator";
-import { colors } from "../theme/colors";
-import { calculateNextPayment } from "../utils/dateHelpers";
-import { scheduleReminder } from "../utils/notifications";
+import { categories } from '../constants/categories';
+import { getIconKeyForName } from '../constants/icons';
+import { addSubscription } from '../db/repositories/subscriptions.repo';
+import type { RootStackParamList } from '../navigation/RootNavigator';
+import { colors } from '../theme/colors';
+import type { Subscription } from '../types/subscription';
+import { calculateNextPayment } from '../utils/dateHelpers';
+import { cancelReminder, scheduleReminder } from '../utils/notifications';
 
-type Props = NativeStackScreenProps<RootStackParamList, "AddSubscription">;
+type Props = NativeStackScreenProps<RootStackParamList, 'AddSubscription'>;
 
 export default function AddSubscriptionScreen({ navigation }: Props) {
-  const [name, setName] = React.useState("");
-  const [price, setPrice] = React.useState("");
-  const [category, setCategory] = React.useState("Other");
-  const [billingCycle, setBillingCycle] = React.useState("monthly");
+  const [name, setName] = React.useState('');
+  const [price, setPrice] = React.useState('');
+  const [category, setCategory] = React.useState('Other');
+  const [billingCycle, setBillingCycle] =
+    React.useState<Subscription['billingCycle']>('monthly');
   const [startDate, setStartDate] = React.useState<string | null>(null);
   const [showDatePicker, setShowDatePicker] = React.useState(false);
   const [reminderDaysBefore, setReminderDaysBefore] = React.useState<number>(1); // default 1
 
+  const DAY_MS = 24 * 60 * 60 * 1000;
+
   const handleSave = async () => {
     if (!name || !price) {
-      Alert.alert("Validation", "Please enter name and price");
+      Alert.alert('Validation', 'Please enter name and price');
       return;
     }
 
+    let scheduledNotificationId: string | null = null;
+
     try {
+      const numericPrice = parseFloat(price);
+      if (Number.isNaN(numericPrice)) {
+        Alert.alert('Validation', 'Please enter a valid number for price');
+        return;
+      }
       const start = startDate || new Date().toISOString();
       const nextPayment = calculateNextPayment(start, billingCycle);
+      const reminderDays = reminderDaysBefore ?? 1;
+      const triggerDate = new Date(
+        new Date(nextPayment).getTime() - reminderDays * DAY_MS,
+      );
+
+      scheduledNotificationId =
+        (await scheduleReminder(
+          `sub-${Date.now()}`,
+          `${name} renewal soon`,
+          `Your ${name} subscription will renew at $${numericPrice.toFixed(2)}`,
+          triggerDate,
+        )) ?? null;
 
       // Save subscription in DB
       await addSubscription({
         name,
         iconKey: getIconKeyForName(name),
-        price: parseFloat(price),
-        currency: "USD",
+        price: numericPrice,
+        currency: 'USD',
         category,
-        billingCycle: billingCycle as any,
+        billingCycle,
         startDate: start,
         nextPaymentDate: nextPayment,
-        notes: "",
-        reminderDaysBefore: reminderDaysBefore ?? 1,
+        notes: '',
+        reminderDaysBefore: reminderDays,
+        notificationId: scheduledNotificationId,
       });
-
-      // Schedule notification
-      const triggerDate = new Date(
-        new Date(nextPayment).getTime() -
-          (reminderDaysBefore ?? 1) * 24 * 60 * 60 * 1000
-      );
-
-      await scheduleReminder(
-        `sub-${Date.now()}`,
-        `${name} renewal soon`,
-        `Your ${name} subscription will renew at $${price}`,
-        triggerDate
-      );
 
       navigation.goBack();
     } catch (err) {
-      console.error("Failed to add subscription:", err);
-      Alert.alert("Error", "Could not save subscription");
+      if (scheduledNotificationId) {
+        await cancelReminder(scheduledNotificationId);
+      }
+      console.error('Failed to add subscription:', err);
+      Alert.alert('Error', 'Could not save subscription');
     }
   };
 
@@ -81,10 +95,7 @@ export default function AddSubscriptionScreen({ navigation }: Props) {
   };
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={{ paddingBottom: 40 }}
-    >
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
       <Text style={styles.title}>Add New Subscription</Text>
 
       <TextInput
@@ -121,7 +132,7 @@ export default function AddSubscriptionScreen({ navigation }: Props) {
       <View style={styles.pickerWrapper}>
         <Picker
           selectedValue={billingCycle}
-          onValueChange={(value) => setBillingCycle(value)}
+          onValueChange={(value: Subscription['billingCycle']) => setBillingCycle(value)}
           style={styles.picker}
         >
           <Picker.Item label="Monthly" value="monthly" />
@@ -134,7 +145,7 @@ export default function AddSubscriptionScreen({ navigation }: Props) {
       <Text style={styles.label}>Start Date</Text>
       <Pressable onPress={() => setShowDatePicker(true)} style={styles.input}>
         <Text style={{ color: colors.text }}>
-          {startDate ? new Date(startDate).toDateString() : "Pick a date"}
+          {startDate ? new Date(startDate).toDateString() : 'Pick a date'}
         </Text>
       </Pressable>
 
@@ -160,7 +171,12 @@ export default function AddSubscriptionScreen({ navigation }: Props) {
         </Picker>
       </View>
 
-      <Pressable style={styles.saveButton} onPress={handleSave}>
+      <Pressable
+        style={styles.saveButton}
+        onPress={() => {
+          void handleSave();
+        }}
+      >
         <Text style={styles.saveText}>Save</Text>
       </Pressable>
     </ScrollView>
@@ -171,7 +187,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background, padding: 20 },
   title: {
     fontSize: 22,
-    fontFamily: "PoppinsBold",
+    fontFamily: 'PoppinsBold',
     color: colors.text,
     marginBottom: 20,
   },
@@ -181,10 +197,10 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     marginBottom: 12,
-    fontFamily: "PoppinsRegular",
+    fontFamily: 'PoppinsRegular',
   },
   label: {
-    fontFamily: "PoppinsBold",
+    fontFamily: 'PoppinsBold',
     color: colors.textSecondary,
     marginBottom: 4,
   },
@@ -198,12 +214,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accent,
     padding: 14,
     borderRadius: 12,
-    alignItems: "center",
+    alignItems: 'center',
     marginTop: 8,
   },
   saveText: {
     color: colors.background,
-    fontFamily: "PoppinsBold",
+    fontFamily: 'PoppinsBold',
     fontSize: 16,
   },
 });
