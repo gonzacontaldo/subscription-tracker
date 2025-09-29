@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import * as React from 'react';
 
 import AddSubscriptionScreen from '../screens/AddSubscriptionScreen';
+import AnalyticsScreen from '../screens/AnalyticsScreen';
 import DetailsScreen from '../screens/DetailsScreen';
 import HomeScreen from '../screens/HomeScreen';
 import { colors } from '../theme/colors';
@@ -13,8 +14,13 @@ export type RootStackParamList = {
   Details: { id: number };
 };
 
+export type RootDrawerParamList = {
+  Main: undefined;
+  Analytics: undefined;
+};
+
 const Stack = createNativeStackNavigator<RootStackParamList>();
-const Drawer = createDrawerNavigator();
+const Drawer = createDrawerNavigator<RootDrawerParamList>();
 
 function MainStack() {
   return (
@@ -47,6 +53,11 @@ export default function RootNavigator() {
         name="Main"
         component={MainStack}
         options={{ drawerLabel: 'Home' }}
+      />
+      <Drawer.Screen
+        name="Analytics"
+        component={AnalyticsScreen}
+        options={{ drawerLabel: 'Analytics' }}
       />
       {/* Later add: <Drawer.Screen name="Filters" component={FiltersScreen} /> */}
     </Drawer.Navigator>
