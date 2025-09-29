@@ -1,6 +1,6 @@
-import { Picker } from "@react-native-picker/picker";
-import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import * as React from "react";
+import { Picker } from '@react-native-picker/picker';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import * as React from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -9,23 +9,23 @@ import {
   Text,
   TextInput,
   View,
-} from "react-native";
-import DateTimePickerModal from "react-native-modal-datetime-picker";
+} from 'react-native';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
 
-import { categories } from "../constants/categories";
-import { getIconKeyForName } from "../constants/icons";
+import { categories } from '../constants/categories';
+import { getIconKeyForName } from '../constants/icons';
 import {
   deleteSubscription,
   getSubscriptionById,
   updateSubscription,
-} from "../db/repositories/subscriptions.repo";
-import type { RootStackParamList } from "../navigation/RootNavigator";
-import { colors } from "../theme/colors";
-import type { Subscription } from "../types/subscription";
-import { calculateNextPayment } from "../utils/dateHelpers";
-import { cancelReminder, scheduleReminder } from "../utils/notifications";
+} from '../db/repositories/subscriptions.repo';
+import type { RootStackParamList } from '../navigation/RootNavigator';
+import { colors } from '../theme/colors';
+import type { Subscription } from '../types/subscription';
+import { calculateNextPayment, rollForwardNextPayment } from '../utils/dateHelpers';
+import { cancelReminder, scheduleReminder } from '../utils/notifications';
 
-type Props = NativeStackScreenProps<RootStackParamList, "Details">;
+type Props = NativeStackScreenProps<RootStackParamList, 'Details'>;
 
 export default function DetailsScreen({ route, navigation }: Props) {
   const { id } = route.params;
@@ -33,14 +33,15 @@ export default function DetailsScreen({ route, navigation }: Props) {
   const [loading, setLoading] = React.useState(true);
   const [editing, setEditing] = React.useState(false);
   const [showDatePicker, setShowDatePicker] = React.useState(false);
+  const DAY_MS = 24 * 60 * 60 * 1000;
 
   React.useEffect(() => {
-    (async () => {
+    void (async () => {
       try {
         const result = await getSubscriptionById(Number(id));
         setSub(result);
       } catch (err) {
-        console.error("Failed to load subscription:", err);
+        console.error('Failed to load subscription:', err);
       } finally {
         setLoading(false);
       }
@@ -50,43 +51,52 @@ export default function DetailsScreen({ route, navigation }: Props) {
   const handleUpdate = async () => {
     if (!sub) return;
 
+    let newNotificationId: string | null = null;
+
     try {
       // Cancel old notification if stored
       if (sub.notificationId) {
         await cancelReminder(sub.notificationId);
       }
 
-      const nextPayment = calculateNextPayment(sub.startDate, sub.billingCycle);
+      const baseNextPayment = calculateNextPayment(sub.startDate, sub.billingCycle);
+      const nextPayment = rollForwardNextPayment(
+        sub.startDate,
+        sub.billingCycle,
+        baseNextPayment,
+      );
+
+      const reminderDays = sub.reminderDaysBefore ?? 1;
+      const triggerDate = new Date(
+        new Date(nextPayment).getTime() - reminderDays * DAY_MS,
+      );
+
+      newNotificationId =
+        (await scheduleReminder(
+          `sub-${sub.id}-${Date.now()}`,
+          `${sub.name} renewal soon`,
+          `Your ${sub.name} subscription will renew at $${sub.price.toFixed(2)}`,
+          triggerDate,
+        )) ?? null;
 
       const updatedSub: Subscription = {
         ...sub,
         iconKey: getIconKeyForName(sub.name),
         nextPaymentDate: nextPayment,
+        notificationId: newNotificationId,
       };
 
       await updateSubscription(updatedSub);
 
-      // Schedule new notification
-      const triggerDate = new Date(
-        new Date(nextPayment).getTime() -
-          (sub.reminderDaysBefore ?? 1) * 24 * 60 * 60 * 1000
-      );
-
-      const newNotifId = await scheduleReminder(
-        `sub-${sub.id}-${Date.now()}`,
-        `${sub.name} renewal soon`,
-        `Your ${sub.name} subscription will renew at $${sub.price}`,
-        triggerDate
-      );
-
-      // Save notifId back to DB
-      await updateSubscription({ ...updatedSub, notificationId: newNotifId });
-
+      setSub(updatedSub);
       setEditing(false);
-      Alert.alert("Success", "Subscription updated");
+      Alert.alert('Success', 'Subscription updated');
     } catch (err) {
-      console.error("Update failed:", err);
-      Alert.alert("Error", "Could not update subscription");
+      if (newNotificationId) {
+        await cancelReminder(newNotificationId);
+      }
+      console.error('Update failed:', err);
+      Alert.alert('Error', 'Could not update subscription');
     }
   };
 
@@ -96,11 +106,11 @@ export default function DetailsScreen({ route, navigation }: Props) {
         await cancelReminder(sub.notificationId);
       }
       await deleteSubscription(Number(id));
-      Alert.alert("Deleted", "Subscription removed");
+      Alert.alert('Deleted', 'Subscription removed');
       navigation.goBack();
     } catch (err) {
-      console.error("Delete failed:", err);
-      Alert.alert("Error", "Could not delete subscription");
+      console.error('Delete failed:', err);
+      Alert.alert('Error', 'Could not delete subscription');
     }
   };
 
@@ -153,10 +163,10 @@ export default function DetailsScreen({ route, navigation }: Props) {
           <View style={styles.pickerWrapper}>
             <Picker
               selectedValue={sub.billingCycle}
-              onValueChange={(val) =>
+              onValueChange={(val: Subscription['billingCycle']) =>
                 setSub({
                   ...sub,
-                  billingCycle: val as Subscription["billingCycle"],
+                  billingCycle: val,
                 })
               }
               style={styles.picker}
@@ -169,14 +179,9 @@ export default function DetailsScreen({ route, navigation }: Props) {
           </View>
 
           <Text style={styles.label}>Start Date</Text>
-          <Pressable
-            onPress={() => setShowDatePicker(true)}
-            style={styles.input}
-          >
+          <Pressable onPress={() => setShowDatePicker(true)} style={styles.input}>
             <Text style={{ color: colors.text }}>
-              {sub.startDate
-                ? new Date(sub.startDate).toDateString()
-                : "Pick a date"}
+              {sub.startDate ? new Date(sub.startDate).toDateString() : 'Pick a date'}
             </Text>
           </Pressable>
           <DateTimePickerModal
@@ -190,7 +195,12 @@ export default function DetailsScreen({ route, navigation }: Props) {
             onCancel={() => setShowDatePicker(false)}
           />
 
-          <Pressable style={styles.saveButton} onPress={handleUpdate}>
+          <Pressable
+            style={styles.saveButton}
+            onPress={() => {
+              void handleUpdate();
+            }}
+          >
             <Text style={styles.saveText}>💾 Save</Text>
           </Pressable>
         </>
@@ -213,14 +223,14 @@ export default function DetailsScreen({ route, navigation }: Props) {
 
       <View style={styles.row}>
         <Pressable style={styles.button} onPress={() => setEditing((e) => !e)}>
-          <Text style={styles.buttonText}>
-            {editing ? "Cancel" : "✏️ Edit"}
-          </Text>
+          <Text style={styles.buttonText}>{editing ? 'Cancel' : '✏️ Edit'}</Text>
         </Pressable>
 
         <Pressable
           style={[styles.button, { backgroundColor: colors.danger }]}
-          onPress={handleDelete}
+          onPress={() => {
+            void handleDelete();
+          }}
         >
           <Text style={styles.buttonText}>🗑 Delete</Text>
         </Pressable>
@@ -233,21 +243,21 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background, padding: 20 },
   name: {
     fontSize: 26,
-    fontFamily: "PoppinsBold",
+    fontFamily: 'PoppinsBold',
     color: colors.text,
     marginBottom: 8,
   },
   price: {
     fontSize: 20,
     color: colors.accent,
-    fontFamily: "PoppinsBold",
+    fontFamily: 'PoppinsBold',
     marginBottom: 16,
   },
   category: { color: colors.textSecondary, marginBottom: 8, fontSize: 16 },
   detail: {
     color: colors.muted,
     marginBottom: 6,
-    fontFamily: "PoppinsRegular",
+    fontFamily: 'PoppinsRegular',
   },
   input: {
     backgroundColor: colors.card,
@@ -255,10 +265,10 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     marginBottom: 12,
-    fontFamily: "PoppinsRegular",
+    fontFamily: 'PoppinsRegular',
   },
   label: {
-    fontFamily: "PoppinsBold",
+    fontFamily: 'PoppinsBold',
     color: colors.textSecondary,
     marginBottom: 4,
   },
@@ -272,24 +282,24 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accent,
     padding: 14,
     borderRadius: 12,
-    alignItems: "center",
+    alignItems: 'center',
     marginTop: 8,
   },
   saveText: {
     color: colors.background,
-    fontFamily: "PoppinsBold",
+    fontFamily: 'PoppinsBold',
     fontSize: 16,
   },
-  row: { flexDirection: "row", justifyContent: "space-between", marginTop: 20 },
+  row: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 20 },
   button: {
     flex: 1,
     backgroundColor: colors.accent,
     padding: 14,
     borderRadius: 12,
-    alignItems: "center",
+    alignItems: 'center',
     marginHorizontal: 4,
   },
-  buttonText: { color: colors.text, fontFamily: "PoppinsBold" },
-  center: { flex: 1, justifyContent: "center", alignItems: "center" },
+  buttonText: { color: colors.text, fontFamily: 'PoppinsBold' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   error: { color: colors.danger, fontSize: 16 },
 });

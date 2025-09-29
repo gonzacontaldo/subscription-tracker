@@ -1,9 +1,10 @@
-import React from "react";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
-import { subscriptionIcons } from "../constants/icons";
-import { colors } from "../theme/colors";
-import { Subscription } from "../types/subscription";
-import { daysUntil } from "../utils/dateHelpers";
+import React from 'react';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+
+import { subscriptionIcons } from '../constants/icons';
+import { colors } from '../theme/colors';
+import type { Subscription } from '../types/subscription';
+import { daysUntil } from '../utils/dateHelpers';
 
 type Props = {
   subscription: Subscription;
@@ -42,31 +43,31 @@ const styles = StyleSheet.create({
     padding: 14,
     marginHorizontal: 16,
     marginVertical: 6,
-    shadowColor: "#000",
+    shadowColor: '#000',
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
   },
-  row: { flexDirection: "row", alignItems: "center" },
-  icon: { width: 32, height: 32, marginRight: 12, resizeMode: "contain" },
+  row: { flexDirection: 'row', alignItems: 'center' },
+  icon: { width: 32, height: 32, marginRight: 12, resizeMode: 'contain' },
   name: {
     fontSize: 16,
-    fontFamily: "PoppinsBold",
+    fontFamily: 'PoppinsBold',
     color: colors.text,
   },
   category: {
     fontSize: 14,
-    fontFamily: "PoppinsRegular",
+    fontFamily: 'PoppinsRegular',
     color: colors.textSecondary,
   },
   nextPayment: {
     fontSize: 14,
-    fontFamily: "PoppinsRegular",
+    fontFamily: 'PoppinsRegular',
     color: colors.muted,
   },
   price: {
     fontSize: 16,
-    fontFamily: "PoppinsBold",
+    fontFamily: 'PoppinsBold',
     color: colors.accent,
   },
 });
