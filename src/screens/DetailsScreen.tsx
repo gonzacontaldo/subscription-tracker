@@ -11,6 +11,7 @@ import {
   View,
 } from "react-native";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
+
 import { categories } from "../constants/categories";
 import { getIconKeyForName } from "../constants/icons";
 import {
@@ -21,7 +22,8 @@ import {
 import type { RootStackParamList } from "../navigation/RootNavigator";
 import { colors } from "../theme/colors";
 import type { Subscription } from "../types/subscription";
-import { calculateNextPayment, daysUntil } from "../utils/dateHelpers";
+import { calculateNextPayment } from "../utils/dateHelpers";
+import { cancelReminder, scheduleReminder } from "../utils/notifications";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Details">;
 
@@ -47,12 +49,39 @@ export default function DetailsScreen({ route, navigation }: Props) {
 
   const handleUpdate = async () => {
     if (!sub) return;
+
     try {
-      await updateSubscription({
+      // Cancel old notification if stored
+      if (sub.notificationId) {
+        await cancelReminder(sub.notificationId);
+      }
+
+      const nextPayment = calculateNextPayment(sub.startDate, sub.billingCycle);
+
+      const updatedSub: Subscription = {
         ...sub,
         iconKey: getIconKeyForName(sub.name),
-        nextPaymentDate: calculateNextPayment(sub.startDate, sub.billingCycle),
-      });
+        nextPaymentDate: nextPayment,
+      };
+
+      await updateSubscription(updatedSub);
+
+      // Schedule new notification
+      const triggerDate = new Date(
+        new Date(nextPayment).getTime() -
+          (sub.reminderDaysBefore ?? 1) * 24 * 60 * 60 * 1000
+      );
+
+      const newNotifId = await scheduleReminder(
+        `sub-${sub.id}-${Date.now()}`,
+        `${sub.name} renewal soon`,
+        `Your ${sub.name} subscription will renew at $${sub.price}`,
+        triggerDate
+      );
+
+      // Save notifId back to DB
+      await updateSubscription({ ...updatedSub, notificationId: newNotifId });
+
       setEditing(false);
       Alert.alert("Success", "Subscription updated");
     } catch (err) {
@@ -63,6 +92,9 @@ export default function DetailsScreen({ route, navigation }: Props) {
 
   const handleDelete = async () => {
     try {
+      if (sub?.notificationId) {
+        await cancelReminder(sub.notificationId);
+      }
       await deleteSubscription(Number(id));
       Alert.alert("Deleted", "Subscription removed");
       navigation.goBack();
@@ -70,13 +102,6 @@ export default function DetailsScreen({ route, navigation }: Props) {
       console.error("Delete failed:", err);
       Alert.alert("Error", "Could not delete subscription");
     }
-  };
-
-  const handleDateConfirm = (date: Date) => {
-    if (sub) {
-      setSub({ ...sub, startDate: date.toISOString() });
-    }
-    setShowDatePicker(false);
   };
 
   if (loading) {
@@ -154,12 +179,14 @@ export default function DetailsScreen({ route, navigation }: Props) {
                 : "Pick a date"}
             </Text>
           </Pressable>
-
           <DateTimePickerModal
             isVisible={showDatePicker}
             mode="date"
             date={sub.startDate ? new Date(sub.startDate) : new Date()}
-            onConfirm={handleDateConfirm}
+            onConfirm={(date) => {
+              setSub({ ...sub, startDate: date.toISOString() });
+              setShowDatePicker(false);
+            }}
             onCancel={() => setShowDatePicker(false)}
           />
 
@@ -180,9 +207,6 @@ export default function DetailsScreen({ route, navigation }: Props) {
           </Text>
           <Text style={styles.detail}>
             Next Payment: {new Date(sub.nextPaymentDate).toDateString()}
-          </Text>
-          <Text style={styles.detail}>
-            Next Payment in {daysUntil(sub.nextPaymentDate)} days
           </Text>
         </>
       )}

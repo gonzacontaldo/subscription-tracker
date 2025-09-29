@@ -72,10 +72,13 @@ export default function HomeScreen({ navigation }: any) {
 
   return (
     <View style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
         <Pressable
           style={styles.menuButton}
-          onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
+          onPress={() =>
+            navigation.getParent()?.dispatch(DrawerActions.openDrawer())
+          }
         >
           <Text style={styles.menuIcon}>☰</Text>
         </Pressable>
@@ -91,14 +94,14 @@ export default function HomeScreen({ navigation }: any) {
               key={opt}
               style={[
                 styles.sortButton,
-                sortBy === opt && styles.sortButtonActive,
+                sortBy === (opt as any) && styles.sortButtonActive,
               ]}
               onPress={() => setSortBy(opt as any)}
             >
               <Text
                 style={[
                   styles.sortButtonText,
-                  sortBy === opt && styles.sortButtonTextActive,
+                  sortBy === (opt as any) && styles.sortButtonTextActive,
                 ]}
               >
                 {opt}
@@ -123,6 +126,7 @@ export default function HomeScreen({ navigation }: any) {
         ListEmptyComponent={
           <Text style={styles.empty}>No subscriptions yet. Add one!</Text>
         }
+        contentContainerStyle={{ paddingBottom: 100 }}
       />
 
       <Pressable
@@ -137,6 +141,38 @@ export default function HomeScreen({ navigation }: any) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
+
+  // Header
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 8,
+  },
+  menuButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.accent,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  menuIcon: {
+    fontSize: 18,
+    color: colors.card,
+    fontFamily: "PoppinsBold",
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontFamily: "PoppinsBold",
+    color: colors.text,
+  },
 
   // Sorting
   sortWrapper: {
@@ -174,9 +210,10 @@ const styles = StyleSheet.create({
   },
   sortButtonTextActive: {
     fontFamily: "PoppinsBold",
-    color: colors.background,
+    color: colors.card,
   },
 
+  // Sections
   sectionHeader: {
     fontSize: 18,
     fontFamily: "PoppinsBold",
@@ -192,14 +229,16 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     fontFamily: "PoppinsRegular",
   },
+
+  // FAB
   fab: {
     position: "absolute",
-    bottom: 30,
-    right: 30,
+    bottom: 20,
+    right: 20,
     backgroundColor: colors.accent,
-    width: 70,
-    height: 70,
-    borderRadius: 15,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     justifyContent: "center",
     alignItems: "center",
     shadowColor: "#000",
@@ -207,35 +246,5 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  fabText: { fontSize: 28, color: colors.background, fontWeight: "bold" },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 8,
-  },
-  menuButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 5,
-    backgroundColor: colors.accent,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 12,
-    shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  menuIcon: {
-    fontSize: 18,
-    color: colors.background,
-    fontFamily: "PoppinsBold",
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontFamily: "PoppinsBold",
-    color: colors.text,
-  },
+  fabText: { fontSize: 28, color: colors.card, fontWeight: "bold" },
 });

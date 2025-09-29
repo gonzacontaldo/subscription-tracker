@@ -1,81 +1,51 @@
-import {
-    openDatabaseAsync,
-    type SQLiteDatabase,
-} from "expo-sqlite";
+// src/db/database.ts
+import * as SQLite from "expo-sqlite";
 
-let _db: SQLiteDatabase | null = null;
+let db: SQLite.SQLiteDatabase;
 
-export async function getDb(): Promise<SQLiteDatabase> {
-  if (!_db) {
-    _db = await openDatabaseAsync("subscriptions.db");
-  }
-  return _db;
-}
+export async function initDatabase() {
+  db = await SQLite.openDatabaseAsync("subscriptions.v2.db");
 
-/**
- * Initialize DB and ensure schema exists.
- * Adds `iconKey` column if it is missing.
- */
-export async function initDatabase(): Promise<void> {
-  const db = await getDb();
-
-  // Create table if not exists (includes iconKey)
+  // Create table with new columns if not exists
   await db.execAsync(`
     CREATE TABLE IF NOT EXISTS subscriptions (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
       iconKey TEXT,
       category TEXT,
-      price REAL NOT NULL,
+      price REAL,
       currency TEXT,
       billingCycle TEXT,
       startDate TEXT,
       nextPaymentDate TEXT,
-      notes TEXT
+      notes TEXT,
+      reminderDaysBefore INTEGER DEFAULT 1,
+      notificationId TEXT
     );
   `);
 
-  // If you migrated from an older schema without iconKey, ensure column exists
-  // (SQLite has limited ALTER TABLE support; try add, ignore on error)
-  try {
-    await db.execAsync(`ALTER TABLE subscriptions ADD COLUMN iconKey TEXT;`);
-  } catch {
-    // Column already exists — ignore
-  }
+  return db;
 }
 
-/**
- * Simple helper to run SQL.
- * - For SELECT queries: returns { rows: { _array, length, item(i) } }
- * - For non-SELECT: returns the same shape with empty rows (so callers don't crash)
- */
-export async function executeSql(
+export async function execute(
   sql: string,
   params: any[] = []
-): Promise<{
-  rows: { _array: any[]; length: number; item: (i: number) => any | null };
-}> {
-  const db = await getDb();
-  const isSelect = /^\s*select/i.test(sql);
+): Promise<SQLite.SQLiteRunResult> {
+  return db.runAsync(sql, params);
+}
 
-  if (isSelect) {
-    const rows = await db.getAllAsync<any>(sql, params);
-    return {
-      rows: {
-        _array: rows,
-        length: rows.length,
-        item: (i: number) => (i >= 0 && i < rows.length ? rows[i] : null),
-      },
-    };
-  } else {
-    // INSERT/UPDATE/DELETE
-    await db.runAsync(sql, params);
-    return {
-      rows: {
-        _array: [],
-        length: 0,
-        item: () => null,
-      },
-    };
-  }
+export async function queryAll<T = any>(
+  sql: string,
+  params: any[] = []
+): Promise<T[]> {
+  const result = await db.getAllAsync<T>(sql, params);
+  return result;
+}
+
+export async function queryOne<T = any>(
+  sql: string,
+  params: any[] = []
+): Promise<T | null> {
+  const result = await db.getFirstAsync<T>(sql, params);
+  return result ?? null;
 }

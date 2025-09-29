@@ -11,12 +11,14 @@ import {
   View,
 } from "react-native";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
+
 import { categories } from "../constants/categories";
 import { getIconKeyForName } from "../constants/icons";
 import { addSubscription } from "../db/repositories/subscriptions.repo";
 import type { RootStackParamList } from "../navigation/RootNavigator";
 import { colors } from "../theme/colors";
 import { calculateNextPayment } from "../utils/dateHelpers";
+import { scheduleReminder } from "../utils/notifications";
 
 type Props = NativeStackScreenProps<RootStackParamList, "AddSubscription">;
 
@@ -27,6 +29,7 @@ export default function AddSubscriptionScreen({ navigation }: Props) {
   const [billingCycle, setBillingCycle] = React.useState("monthly");
   const [startDate, setStartDate] = React.useState<string | null>(null);
   const [showDatePicker, setShowDatePicker] = React.useState(false);
+  const [reminderDaysBefore, setReminderDaysBefore] = React.useState<number>(1); // default 1
 
   const handleSave = async () => {
     if (!name || !price) {
@@ -35,6 +38,10 @@ export default function AddSubscriptionScreen({ navigation }: Props) {
     }
 
     try {
+      const start = startDate || new Date().toISOString();
+      const nextPayment = calculateNextPayment(start, billingCycle);
+
+      // Save subscription in DB
       await addSubscription({
         name,
         iconKey: getIconKeyForName(name),
@@ -42,13 +49,24 @@ export default function AddSubscriptionScreen({ navigation }: Props) {
         currency: "USD",
         category,
         billingCycle: billingCycle as any,
-        startDate: startDate || new Date().toISOString(),
-        nextPaymentDate: calculateNextPayment(
-          startDate || new Date().toISOString(),
-          billingCycle
-        ),
+        startDate: start,
+        nextPaymentDate: nextPayment,
         notes: "",
+        reminderDaysBefore: reminderDaysBefore ?? 1,
       });
+
+      // Schedule notification
+      const triggerDate = new Date(
+        new Date(nextPayment).getTime() -
+          (reminderDaysBefore ?? 1) * 24 * 60 * 60 * 1000
+      );
+
+      await scheduleReminder(
+        `sub-${Date.now()}`,
+        `${name} renewal soon`,
+        `Your ${name} subscription will renew at $${price}`,
+        triggerDate
+      );
 
       navigation.goBack();
     } catch (err) {
@@ -127,6 +145,20 @@ export default function AddSubscriptionScreen({ navigation }: Props) {
         onConfirm={handleDateConfirm}
         onCancel={() => setShowDatePicker(false)}
       />
+
+      <Text style={styles.label}>Reminder</Text>
+      <View style={styles.pickerWrapper}>
+        <Picker
+          selectedValue={reminderDaysBefore}
+          onValueChange={(val) => setReminderDaysBefore(val)}
+          style={styles.picker}
+        >
+          <Picker.Item label="1 day before" value={1} />
+          <Picker.Item label="2 days before" value={2} />
+          <Picker.Item label="3 days before" value={3} />
+          <Picker.Item label="1 week before" value={7} />
+        </Picker>
+      </View>
 
       <Pressable style={styles.saveButton} onPress={handleSave}>
         <Text style={styles.saveText}>Save</Text>

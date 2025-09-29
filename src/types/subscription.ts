@@ -1,7 +1,7 @@
-export type Subscription = {
+export interface Subscription {
   id?: number;
   name: string;
-  iconKey?: string; // e.g. "netflix"
+  iconKey?: string;
   category: string;
   price: number;
   currency: string;
@@ -9,4 +9,6 @@ export type Subscription = {
   startDate: string;
   nextPaymentDate: string;
   notes?: string;
-};
+  reminderDaysBefore?: number;   // 👈 default 1
+  notificationId?: string | null; // 👈 store Expo’s notif ID
+}

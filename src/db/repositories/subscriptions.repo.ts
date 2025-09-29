@@ -1,20 +1,26 @@
 import { Subscription } from "../../types/subscription";
-import { executeSql } from "../database";
+import { execute, queryAll, queryOne } from "../database";
 
 export async function getAllSubscriptions(): Promise<Subscription[]> {
-  const result = await executeSql("SELECT * FROM subscriptions ORDER BY id DESC");
-  return result.rows._array;
+  return await queryAll<Subscription>(
+    "SELECT * FROM subscriptions ORDER BY id DESC"
+  );
 }
 
-export async function getSubscriptionById(id: number): Promise<Subscription | null> {
-  const result = await executeSql("SELECT * FROM subscriptions WHERE id = ?", [id]);
-  return result.rows.length > 0 ? result.rows.item(0) : null;
+export async function getSubscriptionById(
+  id: number
+): Promise<Subscription | null> {
+  return await queryOne<Subscription>(
+    "SELECT * FROM subscriptions WHERE id = ?",
+    [id]
+  );
 }
 
 export async function addSubscription(sub: Subscription) {
   const query = `
-    INSERT INTO subscriptions (name, iconKey, category, price, currency, billingCycle, startDate, nextPaymentDate, notes)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO subscriptions 
+    (name, iconKey, category, price, currency, billingCycle, startDate, nextPaymentDate, notes, reminderDaysBefore, notificationId)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
   const params = [
     sub.name,
@@ -26,15 +32,19 @@ export async function addSubscription(sub: Subscription) {
     sub.startDate,
     sub.nextPaymentDate,
     sub.notes || "",
+    sub.reminderDaysBefore ?? 1,
+    sub.notificationId || null,
   ];
-  await executeSql(query, params);
+  await execute(query, params);
 }
 
 export async function updateSubscription(sub: Subscription) {
   if (!sub.id) throw new Error("Subscription id required for update");
+
   const query = `
     UPDATE subscriptions
-    SET name = ?, iconKey = ?, category = ?, price = ?, currency = ?, billingCycle = ?, startDate = ?, nextPaymentDate = ?, notes = ?
+    SET name = ?, iconKey = ?, category = ?, price = ?, currency = ?, billingCycle = ?, 
+        startDate = ?, nextPaymentDate = ?, notes = ?, reminderDaysBefore = ?, notificationId = ?
     WHERE id = ?
   `;
   const params = [
@@ -47,11 +57,13 @@ export async function updateSubscription(sub: Subscription) {
     sub.startDate,
     sub.nextPaymentDate,
     sub.notes || "",
+    sub.reminderDaysBefore ?? 1,
+    sub.notificationId || null,
     sub.id,
   ];
-  await executeSql(query, params);
+  await execute(query, params);
 }
 
 export async function deleteSubscription(id: number) {
-  await executeSql("DELETE FROM subscriptions WHERE id = ?", [id]);
+  await execute("DELETE FROM subscriptions WHERE id = ?", [id]);
 }
