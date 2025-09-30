@@ -5,10 +5,11 @@ export interface Subscription {
   category: string;
   price: number;
   currency: string;
-  billingCycle: "monthly" | "yearly" | "weekly" | "custom";
+  billingCycle: 'monthly' | 'yearly' | 'weekly' | 'custom';
   startDate: string;
   nextPaymentDate: string;
   notes?: string;
-  reminderDaysBefore?: number;   // 👈 default 1
+  reminderDaysBefore?: number; // 👈 default 1
   notificationId?: string | null; // 👈 store Expo’s notif ID
+  userId?: number;
 }

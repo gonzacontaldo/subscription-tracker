@@ -4,7 +4,9 @@ import * as React from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import 'react-native-gesture-handler';
 
+import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import { initDatabase } from './src/db/database';
+import AuthNavigator from './src/navigation/AuthNavigator';
 import RootNavigator from './src/navigation/RootNavigator';
 import { loadFonts } from './src/theme/fonts';
 
@@ -18,6 +20,24 @@ Notifications.setNotificationHandler({
     shouldShowList: true,
   }),
 });
+
+function AppNavigation() {
+  const { user, initializing } = useAuth();
+
+  if (initializing) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator />
+      </View>
+    );
+  }
+
+  return (
+    <NavigationContainer>
+      {user ? <RootNavigator /> : <AuthNavigator />}
+    </NavigationContainer>
+  );
+}
 
 export default function App() {
   const [ready, setReady] = React.useState(false);
@@ -44,8 +64,8 @@ export default function App() {
   }
 
   return (
-    <NavigationContainer>
-      <RootNavigator />
-    </NavigationContainer>
+    <AuthProvider>
+      <AppNavigation />
+    </AuthProvider>
   );
 }

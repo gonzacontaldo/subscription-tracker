@@ -6,6 +6,16 @@ let db: SQLite.SQLiteDatabase;
 export async function initDatabase() {
   db = await SQLite.openDatabaseAsync('subscriptions.v2.db');
 
+  await db.execAsync(`
+    CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      email TEXT NOT NULL UNIQUE,
+      passwordHash TEXT NOT NULL,
+      displayName TEXT NOT NULL,
+      avatarUri TEXT
+    );
+  `);
+
   // Create table with new columns if not exists
   await db.execAsync(`
     CREATE TABLE IF NOT EXISTS subscriptions (
@@ -20,9 +30,19 @@ export async function initDatabase() {
       nextPaymentDate TEXT,
       notes TEXT,
       reminderDaysBefore INTEGER DEFAULT 1,
-      notificationId TEXT
+      notificationId TEXT,
+      userId INTEGER REFERENCES users(id)
     );
   `);
+
+  try {
+    await db.execAsync(
+      'ALTER TABLE subscriptions ADD COLUMN userId INTEGER REFERENCES users(id);',
+    );
+  } catch (error) {
+    void error;
+    // Ignore if column already exists
+  }
 
   return db;
 }
