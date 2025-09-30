@@ -1,12 +1,28 @@
-import { createDrawerNavigator } from '@react-navigation/drawer';
+import {
+  createDrawerNavigator,
+  DrawerContentScrollView,
+  DrawerItemList,
+  type DrawerContentComponentProps,
+} from '@react-navigation/drawer';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import * as React from 'react';
+import {
+  Image,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useAuth } from '../contexts/AuthContext';
 import AddSubscriptionScreen from '../screens/AddSubscriptionScreen';
 import AnalyticsScreen from '../screens/AnalyticsScreen';
 import DetailsScreen from '../screens/DetailsScreen';
 import HomeScreen from '../screens/HomeScreen';
 import { colors } from '../theme/colors';
+import { responsiveFont, responsiveSpacing } from '../theme/layout';
 
 export type RootStackParamList = {
   Home: undefined;
@@ -22,9 +38,74 @@ export type RootDrawerParamList = {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Drawer = createDrawerNavigator<RootDrawerParamList>();
 
+function CustomDrawerContent(props: DrawerContentComponentProps) {
+  const { user, logout, switchAccount } = useAuth();
+  const { width } = useWindowDimensions();
+  const styles = React.useMemo(
+    () => StyleSheet.create(createDrawerStyles(width)),
+    [width],
+  );
+
+  const initials = React.useMemo(() => {
+    if (!user?.displayName) {
+      return user?.email?.charAt(0)?.toUpperCase() ?? '?';
+    }
+    return user.displayName
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part.charAt(0).toUpperCase())
+      .join('');
+  }, [user]);
+
+  const handleLogout = React.useCallback(() => {
+    void logout().catch((err) => console.error('Logout failed', err));
+  }, [logout]);
+
+  const handleSwitchAccount = React.useCallback(() => {
+    void switchAccount().catch((err) => console.error('Switch account failed', err));
+  }, [switchAccount]);
+
+  return (
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <DrawerContentScrollView
+        {...props}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <DrawerItemList {...props} />
+      </DrawerContentScrollView>
+      <View style={styles.footer}>
+        <View style={styles.profileRow}>
+          {user?.avatarUri ? (
+            <Image source={{ uri: user.avatarUri }} style={styles.avatar} />
+          ) : (
+            <View style={styles.avatarFallback}>
+              <Text style={styles.avatarInitials}>{initials}</Text>
+            </View>
+          )}
+          <View style={styles.profileText}>
+            <Text style={styles.displayName}>{user?.displayName ?? 'Guest'}</Text>
+            <Text style={styles.email}>{user?.email ?? 'No email'}</Text>
+          </View>
+        </View>
+        <Pressable style={styles.actionButton} onPress={handleSwitchAccount}>
+          <Text style={styles.actionLabel}>Change account</Text>
+        </Pressable>
+        <Pressable
+          style={[styles.actionButton, styles.logoutButton]}
+          onPress={handleLogout}
+        >
+          <Text style={[styles.actionLabel, styles.logoutLabel]}>Log out</Text>
+        </Pressable>
+      </View>
+    </SafeAreaView>
+  );
+}
+
 function MainStack() {
   return (
-    <Stack.Navigator>
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Home" component={HomeScreen} />
       <Stack.Screen name="AddSubscription" component={AddSubscriptionScreen} />
       <Stack.Screen name="Details" component={DetailsScreen} />
@@ -35,6 +116,7 @@ function MainStack() {
 export default function RootNavigator() {
   return (
     <Drawer.Navigator
+      drawerContent={(props) => <CustomDrawerContent {...props} />}
       screenOptions={{
         headerShown: false,
         drawerStyle: {
@@ -63,3 +145,75 @@ export default function RootNavigator() {
     </Drawer.Navigator>
   );
 }
+
+const createDrawerStyles = (width: number) => ({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  scrollContent: {
+    paddingTop: responsiveSpacing(1, width),
+  },
+  footer: {
+    paddingHorizontal: responsiveSpacing(1.4, width),
+    paddingBottom: responsiveSpacing(1.4, width),
+    gap: responsiveSpacing(0.8, width),
+  },
+  profileRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: responsiveSpacing(0.9, width),
+    paddingVertical: responsiveSpacing(0.6, width),
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderColor: `${colors.textSecondary}33`,
+  },
+  avatar: {
+    width: responsiveSpacing(4.8, width),
+    height: responsiveSpacing(4.8, width),
+    borderRadius: responsiveSpacing(2.4, width),
+  },
+  avatarFallback: {
+    width: responsiveSpacing(4.8, width),
+    height: responsiveSpacing(4.8, width),
+    borderRadius: responsiveSpacing(2.4, width),
+    backgroundColor: `${colors.accent}22`,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarInitials: {
+    fontFamily: 'PoppinsBold',
+    color: colors.accent,
+    fontSize: responsiveFont(15, width),
+  },
+  profileText: {
+    flex: 1,
+    gap: responsiveSpacing(0.2, width),
+  },
+  displayName: {
+    fontFamily: 'PoppinsBold',
+    color: colors.text,
+    fontSize: responsiveFont(14, width),
+  },
+  email: {
+    fontFamily: 'PoppinsRegular',
+    color: colors.textSecondary,
+    fontSize: responsiveFont(12, width),
+  },
+  actionButton: {
+    paddingVertical: responsiveSpacing(0.8, width),
+  },
+  actionLabel: {
+    fontFamily: 'PoppinsRegular',
+    color: colors.text,
+    fontSize: responsiveFont(13, width),
+  },
+  logoutButton: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderColor: `${colors.textSecondary}22`,
+    marginTop: responsiveSpacing(0.2, width),
+  },
+  logoutLabel: {
+    color: colors.danger,
+    fontFamily: 'PoppinsBold',
+  },
+});
