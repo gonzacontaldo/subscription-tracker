@@ -1,17 +1,17 @@
 export const colors = {
   // Core
-  background: "#F5F6F7",  // light neutral
-  card: "#FFFFFF",        // white
+  background: '#FAFAF7', // soft white backdrop
+  card: '#FFFFFF', // crisp white for surfaces
 
   // Accents
-  accent: "#27AE60",      // emerald green (primary)
-  accentSecondary: "#34495E", // slate blue (secondary)
+  accent: '#FFD338', // primary golden yellow
+  accentSecondary: '#111111', // inky black for contrast moments
 
   // Text
-  text: "#2C3E50",        // dark slate
-  textSecondary: "#7F8C8D", // softer gray for hints, labels
+  text: '#1A1A1A', // high-contrast neutral for primary copy
+  textSecondary: '#5C5C5C', // tempered gray for supporting text
 
   // Supporting
-  muted: "#A0A4A7",       // subtle gray for dividers / backgrounds
-  danger: "#E74C3C",      // friendly red for destructive actions
+  muted: '#D6D6D6', // light gray for dividers and disabled states
+  danger: '#E74C3C', // approachable red for destructive actions
 };

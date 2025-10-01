@@ -26,14 +26,14 @@ import {
 import type { Subscription } from '../types/subscription';
 
 const palette = [
-  '#27AE60',
-  '#2D9CDB',
-  '#F2994A',
-  '#9B59B6',
-  '#EB5757',
-  '#6FCF97',
-  '#F2C94C',
-  '#BB6BD9',
+  '#FFD338',
+  '#111111',
+  '#FFE27A',
+  '#2D2D2D',
+  '#FFF4C1',
+  '#4F4F4F',
+  '#FFB400',
+  '#7A7A7A',
 ];
 
 interface MonthlyEntry {

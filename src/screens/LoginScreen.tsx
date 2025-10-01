@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-unused-styles */
 import * as React from 'react';
 import {
   ActivityIndicator,
@@ -31,7 +32,7 @@ export default function LoginScreen() {
   const [error, setError] = React.useState<string | null>(null);
 
   const { width } = useWindowDimensions();
-  const styles = React.useMemo(() => StyleSheet.create(createStyles(width)), [width]);
+  const styles = React.useMemo(() => createStyles(width), [width]);
 
   React.useEffect(() => {
     setEmail(lastEmail ?? '');
@@ -169,81 +170,82 @@ export default function LoginScreen() {
   );
 }
 
-const createStyles = (width: number) => ({
-  safeArea: {
-    flex: 1,
-    backgroundColor: colors.background,
-    padding: responsiveSpacing(2, width),
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  flex: {
-    width: '100%',
-    maxWidth: 420,
-  },
-  card: {
-    backgroundColor: colors.card,
-    borderRadius: responsiveSpacing(1.5, width),
-    padding: responsiveSpacing(2, width),
-    gap: responsiveSpacing(1.2, width),
-    shadowColor: '#101828',
-    shadowOpacity: 0.1,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 12 },
-    elevation: 4,
-  },
-  heading: {
-    fontFamily: 'PoppinsBold',
-    color: colors.text,
-    fontSize: responsiveFont(26, width),
-  },
-  subtitle: {
-    fontFamily: 'PoppinsRegular',
-    color: colors.textSecondary,
-    fontSize: responsiveFont(14, width),
-    lineHeight: responsiveFont(20, width),
-  },
-  fieldGroup: {
-    gap: responsiveSpacing(0.6, width),
-  },
-  label: {
-    fontFamily: 'PoppinsBold',
-    color: colors.text,
-    fontSize: responsiveFont(13, width),
-  },
-  input: {
-    backgroundColor: `${colors.background}F5`,
-    borderRadius: responsiveSpacing(1, width),
-    paddingHorizontal: responsiveSpacing(1.2, width),
-    paddingVertical: responsiveSpacing(0.9, width),
-    fontFamily: 'PoppinsRegular',
-    fontSize: responsiveFont(14, width),
-    borderWidth: 1,
-    borderColor: `${colors.textSecondary}20`,
-    color: colors.text,
-  },
-  error: {
-    fontFamily: 'PoppinsRegular',
-    color: colors.danger,
-    fontSize: responsiveFont(12, width),
-  },
-  submitButton: {
-    marginTop: responsiveSpacing(0.5, width),
-  },
-  switchModeButton: {
-    alignSelf: 'center',
-    marginTop: responsiveSpacing(1, width),
-  },
-  switchModeLabel: {
-    fontFamily: 'PoppinsBold',
-    color: colors.accent,
-    fontSize: responsiveFont(13, width),
-  },
-  loadingOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#00000022',
-    borderRadius: responsiveSpacing(1.5, width),
-  },
-});
+const createStyles = (width: number) =>
+  StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: colors.background,
+      padding: responsiveSpacing(2, width),
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    flex: {
+      width: '100%',
+      maxWidth: 420,
+    },
+    card: {
+      backgroundColor: colors.card,
+      borderRadius: responsiveSpacing(1.5, width),
+      padding: responsiveSpacing(2, width),
+      gap: responsiveSpacing(1.2, width),
+      shadowColor: colors.accentSecondary,
+      shadowOpacity: 0.1,
+      shadowRadius: 16,
+      shadowOffset: { width: 0, height: 12 },
+      elevation: 4,
+    },
+    heading: {
+      fontFamily: 'PoppinsBold',
+      color: colors.text,
+      fontSize: responsiveFont(26, width),
+    },
+    subtitle: {
+      fontFamily: 'PoppinsRegular',
+      color: colors.textSecondary,
+      fontSize: responsiveFont(14, width),
+      lineHeight: responsiveFont(20, width),
+    },
+    fieldGroup: {
+      gap: responsiveSpacing(0.6, width),
+    },
+    label: {
+      fontFamily: 'PoppinsBold',
+      color: colors.text,
+      fontSize: responsiveFont(13, width),
+    },
+    input: {
+      backgroundColor: `${colors.background}F5`,
+      borderRadius: responsiveSpacing(1, width),
+      paddingHorizontal: responsiveSpacing(1.2, width),
+      paddingVertical: responsiveSpacing(0.9, width),
+      fontFamily: 'PoppinsRegular',
+      fontSize: responsiveFont(14, width),
+      borderWidth: 1,
+      borderColor: `${colors.textSecondary}20`,
+      color: colors.text,
+    },
+    error: {
+      fontFamily: 'PoppinsRegular',
+      color: colors.danger,
+      fontSize: responsiveFont(12, width),
+    },
+    submitButton: {
+      marginTop: responsiveSpacing(0.5, width),
+    },
+    switchModeButton: {
+      alignSelf: 'center',
+      marginTop: responsiveSpacing(1, width),
+    },
+    switchModeLabel: {
+      fontFamily: 'PoppinsBold',
+      color: colors.accent,
+      fontSize: responsiveFont(13, width),
+    },
+    loadingOverlay: {
+      ...StyleSheet.absoluteFillObject,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: '#00000022',
+      borderRadius: responsiveSpacing(1.5, width),
+    },
+  });

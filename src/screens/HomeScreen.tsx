@@ -368,7 +368,7 @@ const createStyles = (width: number) =>
       backgroundColor: colors.card,
       justifyContent: 'center',
       alignItems: 'center',
-      shadowColor: '#101828',
+      shadowColor: colors.accentSecondary,
       shadowOpacity: 0.12,
       shadowRadius: 12,
       shadowOffset: { width: 0, height: 8 },
@@ -404,7 +404,7 @@ const createStyles = (width: number) =>
       padding: responsiveSpacing(1.6, width),
       gap: responsiveSpacing(1.4, width),
       marginBottom: responsiveSpacing(0.4, width),
-      shadowColor: '#101828',
+      shadowColor: colors.accentSecondary,
       shadowOpacity: 0.12,
       shadowRadius: 20,
       shadowOffset: { width: 0, height: 12 },
@@ -492,7 +492,7 @@ const createStyles = (width: number) =>
     },
     sortChipLabelActive: {
       fontFamily: 'PoppinsBold',
-      color: colors.card,
+      color: colors.accentSecondary,
     },
     upcomingCard: {
       backgroundColor: `${colors.accent}16`,

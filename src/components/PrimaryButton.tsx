@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   label: {
-    color: colors.background,
+    color: colors.accentSecondary,
     fontFamily: 'PoppinsBold',
     fontSize: responsiveFont(16),
     letterSpacing: 0.3,

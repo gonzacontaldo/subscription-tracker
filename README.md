@@ -1,50 +1,106 @@
-# Welcome to your Expo app 👋
+# Subscription Tracker
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Subscription Tracker is a React Native app built with Expo that keeps a consolidated view of every recurring payment. It helps users stay ahead of renewals with smart reminders, real-time snapshots of monthly spend, and at-a-glance analytics.
 
-## Get started
+## Features
 
-1. Install dependencies
+- **Personalised accounts** – local authentication with quick account switching and avatar support.
+- **Subscription management** – add, edit, and delete subscriptions with categories, billing cadence, notes, and automatic next-payment rollovers.
+- **Reminders** – schedules Expo push notifications before each renewal and realigns them if payment dates shift.
+- **Analytics dashboard** – donut chart and summary insights that surface top spend categories and upcoming renewals.
+- **Offline-first storage** – persists everything locally via Expo SQLite so the app works without a network connection.
+
+## Tech Stack
+
+- [Expo](https://expo.dev/) (React Native 0.81, Expo SDK 54)
+- TypeScript with strict mode
+- React Navigation (drawer + native stack)
+- Expo SQLite for data persistence
+- Expo Notifications for reminders
+- AsyncStorage for lightweight session caching
+- ESLint + Prettier + Husky + lint-staged
+
+## Getting Started
+
+1. **Install prerequisites**
+
+   - Node.js 22 (managed via [Volta](https://volta.sh) – see `package.json#volta`)
+   - npm 10
+   - Expo CLI (`npm install -g expo-cli`) if you prefer the global binary
+
+2. **Install dependencies**
 
    ```bash
    npm install
    ```
 
-2. Start the app
+3. **Start the development server**
 
    ```bash
-   npx expo start
+   npm run start
    ```
 
-In the output, you'll find options to open the app in a
+   Then choose your target: Expo Go, iOS simulator, Android emulator, or a custom development build.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+4. **Run on a specific platform**
+   ```bash
+   npm run ios
+   npm run android
+   npm run web
+   ```
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## Project Structure
 
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```
+.
+├── App.tsx                      # App bootstrap and navigation entry point
+├── app.json                     # Expo runtime configuration
+├── assets/                      # Icons, splash art, custom fonts
+├── src/
+│   ├── components/              # Presentational components (cards, charts, buttons)
+│   ├── constants/               # Static lookups (categories, icons)
+│   ├── contexts/                # React contexts (e.g., authentication)
+│   ├── db/                      # SQLite helpers and repositories
+│   ├── navigation/              # Root + auth navigators
+│   ├── screens/                 # Screen components by navigation route
+│   ├── theme/                   # Color palette, layout helpers, font loading
+│   ├── types/                   # Shared TypeScript types
+│   └── utils/                   # Cross-cutting helpers (dates, notifications)
+└── tests/                       # Placeholder for upcoming test suites
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Scripts
 
-## Learn more
+| Command                 | Description                                         |
+| ----------------------- | --------------------------------------------------- |
+| `npm run start`         | Start the Expo dev server                           |
+| `npm run ios`           | Launch the iOS simulator (requires Xcode)           |
+| `npm run android`       | Launch the Android emulator                         |
+| `npm run web`           | Run the app in a web browser                        |
+| `npm run typecheck`     | Type-check the project with the TypeScript compiler |
+| `npm run lint`          | Lint the project with ESLint                        |
+| `npm run format`        | Format files with Prettier                          |
+| `npm run reset-project` | Reset to the Expo starter template                  |
 
-To learn more about developing your project with Expo, look at the following resources:
+> Additional build, test, and release scripts will be introduced as part of the professionalisation roadmap.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Configuration & Environment
 
-## Join the community
+- **Branding**: Update `app.json` (`name`, `slug`, bundle identifiers) as branding or package IDs evolve.
+- **Notifications**: On first launch Expo requests notification permissions; no extra configuration is required during development.
+- **Fonts**: Custom Poppins variants are bundled under `assets/fonts` and loaded at app start.
 
-Join our community of developers creating universal apps.
+## Release Checklist
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- Increment `app.json` version/build metadata.
+- Update the changelog (see `CHANGELOG.md`).
+- Run linting/formatting before committing (`npm run lint`, `npm run format`).
+- Build signed binaries or submit through EAS once CI & build scripts are in place.
+
+## Roadmap
+
+See the issue tracker for the full professionalisation plan. Immediate priorities include automated testing, CI/CD pipelines, secure credential storage, and accessibility enhancements.
+
+## License
+
+This project is licensed under the MIT License – see [`LICENSE`](./LICENSE) for details.

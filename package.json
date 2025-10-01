@@ -1,5 +1,5 @@
 {
-  "name": "subscription-tracker",
+  "name": "trackify",
   "version": "1.0.0",
   "scripts": {
     "start": "expo start",
@@ -8,6 +8,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
     "format": "prettier -w .",
     "prepare": "husky"
   },

@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-unused-styles */
 import {
   createDrawerNavigator,
   DrawerContentScrollView,
@@ -41,10 +42,7 @@ const Drawer = createDrawerNavigator<RootDrawerParamList>();
 function CustomDrawerContent(props: DrawerContentComponentProps) {
   const { user, logout, switchAccount } = useAuth();
   const { width } = useWindowDimensions();
-  const styles = React.useMemo(
-    () => StyleSheet.create(createDrawerStyles(width)),
-    [width],
-  );
+  const styles = React.useMemo(() => createDrawerStyles(width), [width]);
 
   const initials = React.useMemo(() => {
     if (!user?.displayName) {
@@ -73,6 +71,17 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        <View style={styles.logoContainer}>
+          <View style={styles.logoFrame}>
+            <Image
+              source={require('../../assets/Tracker.png')}
+              style={styles.logo}
+              resizeMode="cover"
+              accessible
+              accessibilityLabel="Trackify logo"
+            />
+          </View>
+        </View>
         <DrawerItemList {...props} />
       </DrawerContentScrollView>
       <View style={styles.footer}>
@@ -146,74 +155,97 @@ export default function RootNavigator() {
   );
 }
 
-const createDrawerStyles = (width: number) => ({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  scrollContent: {
-    paddingTop: responsiveSpacing(1, width),
-  },
-  footer: {
-    paddingHorizontal: responsiveSpacing(1.4, width),
-    paddingBottom: responsiveSpacing(1.4, width),
-    gap: responsiveSpacing(0.8, width),
-  },
-  profileRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: responsiveSpacing(0.9, width),
-    paddingVertical: responsiveSpacing(0.6, width),
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderColor: `${colors.textSecondary}33`,
-  },
-  avatar: {
-    width: responsiveSpacing(4.8, width),
-    height: responsiveSpacing(4.8, width),
-    borderRadius: responsiveSpacing(2.4, width),
-  },
-  avatarFallback: {
-    width: responsiveSpacing(4.8, width),
-    height: responsiveSpacing(4.8, width),
-    borderRadius: responsiveSpacing(2.4, width),
-    backgroundColor: `${colors.accent}22`,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarInitials: {
-    fontFamily: 'PoppinsBold',
-    color: colors.accent,
-    fontSize: responsiveFont(15, width),
-  },
-  profileText: {
-    flex: 1,
-    gap: responsiveSpacing(0.2, width),
-  },
-  displayName: {
-    fontFamily: 'PoppinsBold',
-    color: colors.text,
-    fontSize: responsiveFont(14, width),
-  },
-  email: {
-    fontFamily: 'PoppinsRegular',
-    color: colors.textSecondary,
-    fontSize: responsiveFont(12, width),
-  },
-  actionButton: {
-    paddingVertical: responsiveSpacing(0.8, width),
-  },
-  actionLabel: {
-    fontFamily: 'PoppinsRegular',
-    color: colors.text,
-    fontSize: responsiveFont(13, width),
-  },
-  logoutButton: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderColor: `${colors.textSecondary}22`,
-    marginTop: responsiveSpacing(0.2, width),
-  },
-  logoutLabel: {
-    color: colors.danger,
-    fontFamily: 'PoppinsBold',
-  },
-});
+const createDrawerStyles = (width: number) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    scrollContent: {
+      paddingTop: responsiveSpacing(0.4, width),
+      paddingHorizontal: 0,
+    },
+    logoContainer: {
+      paddingHorizontal: responsiveSpacing(0.3, width),
+      paddingBottom: responsiveSpacing(1, width),
+      alignItems: 'flex-start',
+    },
+    logoFrame: {
+      width: responsiveSpacing(18, width),
+      height: responsiveSpacing(5.6, width),
+      borderRadius: responsiveSpacing(1.2, width),
+      overflow: 'hidden',
+      backgroundColor: 'transparent',
+      alignSelf: 'flex-start',
+    },
+    logo: {
+      width: responsiveSpacing(36, width),
+      height: responsiveSpacing(10.2, width),
+      transform: [
+        { translateX: -responsiveSpacing(9.2, width) },
+        { translateY: -responsiveSpacing(3.1, width) },
+      ],
+    },
+    footer: {
+      paddingHorizontal: responsiveSpacing(1.4, width),
+      paddingBottom: responsiveSpacing(1.4, width),
+      gap: responsiveSpacing(0.8, width),
+    },
+    profileRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: responsiveSpacing(0.9, width),
+      paddingVertical: responsiveSpacing(0.6, width),
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderColor: `${colors.textSecondary}33`,
+    },
+    avatar: {
+      width: responsiveSpacing(4.8, width),
+      height: responsiveSpacing(4.8, width),
+      borderRadius: responsiveSpacing(2.4, width),
+    },
+    avatarFallback: {
+      width: responsiveSpacing(4.8, width),
+      height: responsiveSpacing(4.8, width),
+      borderRadius: responsiveSpacing(2.4, width),
+      backgroundColor: `${colors.accent}22`,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    avatarInitials: {
+      fontFamily: 'PoppinsBold',
+      color: colors.accent,
+      fontSize: responsiveFont(15, width),
+    },
+    profileText: {
+      flex: 1,
+      gap: responsiveSpacing(0.2, width),
+    },
+    displayName: {
+      fontFamily: 'PoppinsBold',
+      color: colors.text,
+      fontSize: responsiveFont(14, width),
+    },
+    email: {
+      fontFamily: 'PoppinsRegular',
+      color: colors.textSecondary,
+      fontSize: responsiveFont(12, width),
+    },
+    actionButton: {
+      paddingVertical: responsiveSpacing(0.8, width),
+    },
+    actionLabel: {
+      fontFamily: 'PoppinsRegular',
+      color: colors.text,
+      fontSize: responsiveFont(13, width),
+    },
+    logoutButton: {
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderColor: `${colors.textSecondary}22`,
+      marginTop: responsiveSpacing(0.2, width),
+    },
+    logoutLabel: {
+      color: colors.danger,
+      fontFamily: 'PoppinsBold',
+    },
+  });
