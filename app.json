@@ -27,8 +27,9 @@
     },
     "extra": {
       "eas": {
-        "projectId": "aebd3ced-9651-4fae-8d40-c1f5a4c1c3d2"
+        "projectId": "53384db2-5e7a-435d-965b-7ee983fff0ad"
       }
-    }
+    },
+    "owner": "gonzacontaldo"
   }
 }
