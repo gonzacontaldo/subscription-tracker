@@ -5,8 +5,8 @@ services:
     plan: free
     branch: main
     rootDir: server
-    buildCommand: npm install && npm run prisma:generate && npm run build
-    startCommand: npm run start
+    buildCommand: npm install
+    startCommand: npx tsx src/index.ts
     envVars:
       - key: DATABASE_URL
         sync: false
