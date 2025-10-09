@@ -6,7 +6,6 @@ services:
     branch: main
     rootDir: server
     buildCommand: npm install && npm run prisma:generate && npm run build
-    preDeployCommand: npm run migrate:init
     startCommand: npm run start
     envVars:
       - key: DATABASE_URL
