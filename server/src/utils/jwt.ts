@@ -1,3 +1,4 @@
+import type { SignOptions, VerifyOptions } from 'jsonwebtoken';
 import jwt from 'jsonwebtoken';
 
 import { env } from '../environment';
@@ -6,13 +7,19 @@ export interface JwtPayload {
   sub: string;
 }
 
-export function signJwt(payload: JwtPayload) {
-  return jwt.sign(payload, env.jwtSecret, { expiresIn: env.jwtExpiresIn });
+const signOptions: SignOptions = env.jwtExpiresIn
+  ? { expiresIn: env.jwtExpiresIn as SignOptions['expiresIn'] }
+  : {};
+
+export function signJwt(payload: JwtPayload): string {
+  return jwt.sign(payload, env.jwtSecret, signOptions);
 }
 
 export function verifyJwt(token: string): JwtPayload | null {
   try {
-    const decoded = jwt.verify(token, env.jwtSecret);
+    const decoded = jwt.verify(token, env.jwtSecret, {
+      ignoreExpiration: false,
+    } as VerifyOptions);
     if (typeof decoded === 'string') {
       return null;
     }
