@@ -37,7 +37,7 @@ const palette = [
 ];
 
 interface MonthlyEntry {
-  id: number;
+  id: string;
   name: string;
   category: string;
   currency: string;
@@ -71,7 +71,7 @@ export default function AnalyticsScreen({ navigation }: Props) {
     }
     setLoading(true);
     try {
-      const subs = await getAllSubscriptions(user.id);
+      const subs = await getAllSubscriptions();
       setSubscriptions(subs);
     } catch (error) {
       console.error('Failed to load analytics data', error);
@@ -88,7 +88,7 @@ export default function AnalyticsScreen({ navigation }: Props) {
 
   const entries: MonthlyEntry[] = React.useMemo(() => {
     return subscriptions
-      .filter((sub): sub is Subscription & { id: number } => typeof sub.id === 'number')
+      .filter((sub): sub is Subscription & { id: string } => typeof sub.id === 'string')
       .map((sub) => ({
         id: sub.id,
         name: sub.name,

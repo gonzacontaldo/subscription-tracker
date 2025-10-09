@@ -1,0 +1,41 @@
+// Prisma schema for subscription-tracker backend
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String          @id @default(uuid())
+  email        String          @unique @map("email")
+  passwordHash String          @map("password_hash")
+  displayName  String          @map("display_name")
+  avatarUri    String?         @map("avatar_uri")
+  createdAt    DateTime        @default(now()) @map("created_at")
+  updatedAt    DateTime        @updatedAt @map("updated_at")
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id                 String   @id @default(uuid())
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId             String   @map("user_id")
+  name               String
+  iconKey            String?  @map("icon_key")
+  category           String?
+  price              Decimal? @map("price")
+  currency           String?
+  billingCycle       String   @map("billing_cycle")
+  startDate          DateTime? @map("start_date")
+  nextPaymentDate    DateTime? @map("next_payment_date")
+  notes              String?
+  reminderDaysBefore Int?     @map("reminder_days_before")
+  notificationId     String?  @map("notification_id")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  @@index([userId])
+}

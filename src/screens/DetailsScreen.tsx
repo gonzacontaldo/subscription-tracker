@@ -55,7 +55,7 @@ export default function DetailsScreen({ route, navigation }: Props) {
     if (!user) return;
     void (async () => {
       try {
-        const result = await getSubscriptionById(Number(id), user.id);
+        const result = await getSubscriptionById(id);
         setSub(result);
       } catch (err) {
         console.error('Failed to load subscription:', err);
@@ -123,7 +123,7 @@ export default function DetailsScreen({ route, navigation }: Props) {
       if (sub?.notificationId) {
         await cancelReminder(sub.notificationId);
       }
-      await deleteSubscription(Number(id), user.id);
+      await deleteSubscription(id);
       Alert.alert('Deleted', 'Subscription removed');
       navigation.goBack();
     } catch (err) {

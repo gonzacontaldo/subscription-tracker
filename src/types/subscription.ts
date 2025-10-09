@@ -1,15 +1,17 @@
 export interface Subscription {
-  id?: number;
+  id?: string;
   name: string;
-  iconKey?: string;
-  category: string;
+  iconKey?: string | null;
+  category?: string | null;
   price: number;
   currency: string;
   billingCycle: 'monthly' | 'yearly' | 'weekly' | 'custom';
   startDate: string;
   nextPaymentDate: string;
-  notes?: string;
-  reminderDaysBefore?: number; // 👈 default 1
-  notificationId?: string | null; // 👈 store Expo’s notif ID
-  userId?: number;
+  notes?: string | null;
+  reminderDaysBefore?: number;
+  notificationId?: string | null;
+  userId?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }

@@ -97,7 +97,6 @@ export default function AddSubscriptionScreen({ navigation }: Props) {
         notes: '',
         reminderDaysBefore: reminderDays,
         notificationId: scheduledNotificationId,
-        userId: user.id,
       });
 
       navigation.goBack();

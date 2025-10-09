@@ -5,7 +5,6 @@ import { ActivityIndicator, View } from 'react-native';
 import 'react-native-gesture-handler';
 
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
-import { initDatabase } from './src/db/database';
 import AuthNavigator from './src/navigation/AuthNavigator';
 import RootNavigator from './src/navigation/RootNavigator';
 import { loadFonts } from './src/theme/fonts';
@@ -46,7 +45,6 @@ export default function App() {
     void (async () => {
       try {
         await loadFonts();
-        await initDatabase();
       } catch (e) {
         console.error('Init failed', e);
       } finally {

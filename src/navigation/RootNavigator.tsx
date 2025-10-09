@@ -28,7 +28,7 @@ import { responsiveFont, responsiveSpacing } from '../theme/layout';
 export type RootStackParamList = {
   Home: undefined;
   AddSubscription: undefined;
-  Details: { id: number };
+  Details: { id: string };
 };
 
 export type RootDrawerParamList = {

@@ -65,7 +65,7 @@ export default function HomeScreen({ navigation }: Props) {
       return;
     }
     try {
-      const subs = await getAllSubscriptions(user.id);
+      const subs = await getAllSubscriptions();
 
       for (const sub of subs) {
         const rolled = rollForwardNextPayment(

@@ -1,10 +1,6 @@
 export interface User {
-  id: number;
+  id: string;
   email: string;
   displayName: string;
   avatarUri?: string | null;
-}
-
-export interface UserWithPassword extends User {
-  passwordHash: string;
 }

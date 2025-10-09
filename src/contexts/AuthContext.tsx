@@ -1,12 +1,14 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Crypto from 'expo-crypto';
 import * as React from 'react';
 
+import type { AuthUser } from '../services/api/auth';
 import {
-  createUser,
-  getUserByEmail,
-  updateUserAvatar,
-} from '../db/repositories/users.repo';
+  fetchCurrentUser,
+  login as apiLogin,
+  logout as apiLogout,
+  register as apiRegister,
+  updateProfile as apiUpdateProfile,
+} from '../services/api/auth';
 import type { User } from '../types/user';
 
 interface AuthContextValue {
@@ -29,40 +31,35 @@ const AuthContext = React.createContext<AuthContextValue | undefined>(undefined)
 const STORAGE_KEY = 'auth:user';
 const LAST_EMAIL_KEY = 'auth:last-email';
 
-async function hashPassword(email: string, password: string) {
-  const normalizedEmail = email.trim().toLowerCase();
-  return await Crypto.digestStringAsync(
-    Crypto.CryptoDigestAlgorithm.SHA256,
-    `${normalizedEmail}:${password}`,
-  );
+function toUser(authUser: AuthUser): User {
+  return {
+    id: authUser.id,
+    email: authUser.email,
+    displayName: authUser.displayName,
+    avatarUri: authUser.avatarUri ?? null,
+  };
+}
+
+async function readStoredUser(): Promise<User | null> {
+  try {
+    const raw = await AsyncStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as User;
+    if (!parsed?.id || !parsed?.email) {
+      return null;
+    }
+    return parsed;
+  } catch (error) {
+    console.warn('Failed to parse stored user', error);
+    await AsyncStorage.removeItem(STORAGE_KEY);
+    return null;
+  }
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = React.useState<User | null>(null);
   const [initializing, setInitializing] = React.useState(true);
   const [lastEmail, setLastEmail] = React.useState<string | null>(null);
-
-  React.useEffect(() => {
-    void (async () => {
-      try {
-        const [storedUser, storedEmail] = await Promise.all([
-          AsyncStorage.getItem(STORAGE_KEY),
-          AsyncStorage.getItem(LAST_EMAIL_KEY),
-        ]);
-
-        if (storedUser) {
-          setUser(JSON.parse(storedUser));
-        }
-        if (storedEmail) {
-          setLastEmail(storedEmail);
-        }
-      } catch (error) {
-        console.error('Failed to restore auth session', error);
-      } finally {
-        setInitializing(false);
-      }
-    })();
-  }, []);
 
   const persistUser = React.useCallback(async (nextUser: User | null) => {
     if (nextUser) {
@@ -75,26 +72,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(nextUser);
   }, []);
 
+  React.useEffect(() => {
+    void (async () => {
+      try {
+        const [storedUser, storedEmail] = await Promise.all([
+          readStoredUser(),
+          AsyncStorage.getItem(LAST_EMAIL_KEY),
+        ]);
+
+        if (storedUser) {
+          setUser(storedUser);
+          setLastEmail(storedUser.email);
+        } else if (storedEmail) {
+          setLastEmail(storedEmail);
+        }
+
+        try {
+          const remoteUser = await fetchCurrentUser();
+          if (remoteUser) {
+            await persistUser(toUser(remoteUser));
+          } else {
+            await persistUser(null);
+          }
+        } catch (error) {
+          console.warn('Failed to refresh remote session', error);
+        }
+      } catch (error) {
+        console.error('Failed to restore auth session', error);
+      } finally {
+        setInitializing(false);
+      }
+    })();
+  }, [persistUser]);
+
   const login = React.useCallback(
     async (email: string, password: string) => {
-      const account = await getUserByEmail(email);
-      if (!account) {
-        throw new Error('No account found for that email');
-      }
-
-      const hashed = await hashPassword(account.email, password);
-      if (hashed !== account.passwordHash) {
-        throw new Error('Incorrect password');
-      }
-
-      const sanitized: User = {
-        id: account.id,
-        email: account.email,
-        displayName: account.displayName,
-        avatarUri: account.avatarUri,
-      };
-
-      await persistUser(sanitized);
+      const account = await apiLogin({ email, password });
+      await persistUser(toUser(account));
     },
     [persistUser],
   );
@@ -109,39 +123,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       password: string;
       displayName: string;
     }) => {
-      const existing = await getUserByEmail(email);
-      if (existing) {
-        throw new Error('Account already exists for that email');
-      }
-
-      const passwordHash = await hashPassword(email, password);
-      const newUser = await createUser({
-        email,
-        passwordHash,
-        displayName,
-      });
-
-      await persistUser(newUser);
+      const account = await apiRegister({ email, password, displayName });
+      await persistUser(toUser(account));
     },
     [persistUser],
   );
 
   const logout = React.useCallback(async () => {
+    await apiLogout();
     await persistUser(null);
     await AsyncStorage.removeItem(LAST_EMAIL_KEY);
     setLastEmail(null);
   }, [persistUser]);
 
   const switchAccount = React.useCallback(async () => {
+    await apiLogout();
     await persistUser(null);
   }, [persistUser]);
 
   const setAvatar = React.useCallback(
     async (uri: string | null) => {
       if (!user) return;
-      await updateUserAvatar(user.id, uri);
-      const updated: User = { ...user, avatarUri: uri ?? null };
-      await persistUser(updated);
+      const updated = await apiUpdateProfile({ avatarUri: uri });
+      await persistUser(toUser(updated));
     },
     [persistUser, user],
   );
